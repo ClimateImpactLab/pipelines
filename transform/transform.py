@@ -105,6 +105,8 @@ def _standardize_longitude_dimension(ds):
 def _rescale_reshape_weights(df):
     '''
     Rescales the pix_cent_x colum values
+    Some of the values are greater than 180 and we want to constrain values
+    to (-180, 180)
 
     Parameters
     ----------
@@ -217,7 +219,19 @@ def weighted_avg(data_array, variable, weights, region_id_string, backup_variabl
     Parameters
     ----------
 
-    data_array: 
+    data_array: XArray object that corresponds to the climate variable
+
+    variable: str
+        passed as argument to the weights dataframe
+
+    weights: Pandas DataFrame 
+        Sector segment weights by geography
+
+    region_id_string: str
+        column in Pandas DataFrame to sum along
+
+    backup_variable: str
+        Replacement if variable is zero or nan
 
     '''
     t1 = time.time()
@@ -290,9 +304,7 @@ def do_thing(job):
                         job['transformation'], job['resample_period'], 
                         how=job['resample_method'])
 
-
     write_to_netcdf(transformed, job['clim_transformed_output_dir'])
-
 
     standardized = _standardize_longitude_dimension(transformed)
     reindexed = _reindex(standardized, weights)
@@ -300,7 +312,6 @@ def do_thing(job):
     reshaped = weighted_avg(reindexed, job['socio_variable'], weights,
                              job['region_id'], 
                              job['backup_socio_var'])
-
     tic = time.time()
     write_to_netcdf(reshaped, job['weighted_variable_output_dir'])
     toc = time.time()
