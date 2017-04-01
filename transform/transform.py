@@ -281,10 +281,8 @@ def write_to_netcdf(data, path):
 
 
 def do_thing(job):
-    #this could 100% run in parallel
 
     df = pd.read_csv(job['weights_path'])
-    i = 0 
     weights = _rescale_reshape_weights(df) 
     
     t1 = time.time()
@@ -308,6 +306,4 @@ def do_thing(job):
     toc = time.time()
     print('to_netcdf: {}'.format(toc - tic))
     t2 = time.time()
-    print('loop {}: {}'.format(i+1, t2 - t1))
-    i += 1
 
