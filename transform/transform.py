@@ -69,7 +69,6 @@ def _standardize_longitude_dimension(ds):
 
     '''
 
-    t1 = time.time()
     coords = ds.coords
     #name checking, coerce lat and lon to latitude and longitude
     if 'longitude' not in coords:
@@ -97,8 +96,6 @@ def _standardize_longitude_dimension(ds):
                     {'latitude_adjusted': sorted(ds.latitude_adjusted)})
 
 
-    t2 = time.time()
-    print('_standardize_long_dim: {}'.format(t2 - t1))
 
     return ds
 
@@ -115,7 +112,6 @@ def _rescale_reshape_weights(df):
     .. note:: unnecessary if we can standardize our input
     '''
 
-    t1 = time.time() 
     df.set_value((df['pix_cent_x'] == 180.125), 'pix_cent_x', -179.875)
     #probably totally unnecessary
     df.drop_duplicates()
@@ -126,8 +122,6 @@ def _rescale_reshape_weights(df):
         }, 
         inplace=True)
 
-    t2 = time.time()
-    print('_rescale_reshape_weights: {}'.format(t2 - t1))
 
 
     
@@ -150,14 +144,11 @@ def _reindex(da, df):
 
 
     ''' 
-    tic = time.time()
 
     res = da.sel_points('reshape_index', 
                         latitude_adjusted=df.latitude_adjusted.values, 
                         longitude_adjusted=df.longitude_adjusted.values)
 
-    toc = time.time()
-    print('_reindex.sel_points: {}'.format(toc - tic))
 
     return res
     
@@ -198,15 +189,9 @@ def transform(path, variable, transformation, frequency, how='mean'):
 
     ds = xr.open_dataset(path).load()
 
-    tic = time.time()
     tr = transformation(ds[variable])
-    toc = time.time()
-    print('TRANSFORM: {}'.format(toc - tic))
 
-    t1 = time.time()
     res = tr.resample(frequency, 'time', how=how, keep_attrs=True)
-    t2 = time.time()
-    print('RESAMPLE: {}'.format(t2 - t1))
 
     return res
 
@@ -234,13 +219,9 @@ def weighted_avg(data_array, variable, weights, region_id_string, backup_variabl
         Replacement if variable is zero or nan
 
     '''
-    t1 = time.time()
     weighted_ds = weights.to_xarray()
 
-    t2 = time.time()
-    print('weighted_avg.to_xarray: {}'.format(t2 - t1))
 
-    t1 = time.time()
     weighted_ds.coords[region_id_string] = weighted_ds[region_id_string]
 
     weights_preferred = (weighted_ds[variable].groupby(
@@ -256,8 +237,6 @@ def weighted_avg(data_array, variable, weights, region_id_string, backup_variabl
                 dim='reshape_index')/weights
 
 
-    t2 = time.time()
-    print('weighted_avg.math: {}'.format(t2 - t1))
 
     return weighted
 
@@ -283,23 +262,28 @@ def to_datafs(archive_name, type='csv',  output_location=None):
 
 def write_to_netcdf(data, path):
 
-    t1 = time.time()
     if path is not None:
         data.to_netcdf(path)
 
-    t2 = time.time()
-    print('file written to {}'.format(path))
-    print('write_to_netcdf: {}'.format(t2 - t1))
 
 
 
 
 def do_thing(job):
+    '''
+
+    1. Reshape weighting dataframe
+    2. Transform climate data by some function and resample along time axis
+    3. Write transformed climate data to disk
+    4. Align climate and socio data
+    5. Get weighted average
+    6. Write to disk
+
+    '''
 
     df = pd.read_csv(job['weights_path'])
     weights = _rescale_reshape_weights(df) 
     
-    t1 = time.time()
     transformed = transform(job['clim_path'], job['clim_var'],
                         job['transformation'], job['resample_period'], 
                         how=job['resample_method'])
@@ -312,9 +296,5 @@ def do_thing(job):
     reshaped = weighted_avg(reindexed, job['socio_variable'], weights,
                              job['region_id'], 
                              job['backup_socio_var'])
-    tic = time.time()
     write_to_netcdf(reshaped, job['weighted_variable_output_dir'])
-    toc = time.time()
-    print('to_netcdf: {}'.format(toc - tic))
-    t2 = time.time()
 
