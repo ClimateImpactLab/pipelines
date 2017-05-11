@@ -10,6 +10,7 @@
 #the transformations. These functions can then be shipped out on a per-job basis
 
 
+
 #this config setup will generate 108 unique jobs. 
 #
 #import itertools
@@ -30,6 +31,9 @@
 #job_list = [dict(zip(config_elements.keys(), p)) for p in product]
 
 # By appending the jobs to a list then dispatching individual jobs in parallel
+
+
+    #Path /shares/gcp/sources/BCSD-original/{}/day/atmos/tasmax/r1i1p1/v1.0/tasmax_day_BCSD_rcp85_r1i1p1_{}_{}: rcp, model,year
 ###############################
 
 
@@ -42,6 +46,15 @@ import glob
 import time
 import datafs
 import ipyparallel
+
+def fill_missing(ds):
+    '''
+    Fills in data at lat,lons where temp ism missing. 
+    This is a post transformation step.
+  
+    '''
+    
+    
 
 
 def _standardize_longitude_dimension(ds):
@@ -151,6 +164,7 @@ def _reindex(da, df):
 
 
     return res
+
     
 
 def transform(path, variable, transformation, frequency, how='mean'):

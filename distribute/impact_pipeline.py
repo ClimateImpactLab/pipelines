@@ -5,6 +5,7 @@ def do_climate_thing(path, climate_arguments):
     '''
     Load climate data year by year, we need tasmax by IR. We have this data. 
     Per run, do this 100 times, read a new dataset in, and take the dot-product
+    Load climate data from various inputs
 
     Parameters
     ----------
@@ -27,7 +28,8 @@ def do_climate_thing(path, climate_arguments):
 def do_covariate_thing(*paths):
     '''
     Read in covariate data
-    Align datasets along region and time dimension
+    Align datasets along region dimension
+    Take IR-level baselines
     Perform any necessary transformations
     For socio-economic data we need to reevaluate every few years 
     
@@ -88,6 +90,12 @@ def do_math_thing(climate_object, IR_parameters,function_specification):
     -------
     Xarray object: result of computation as a MxN Matrix where M is the number of IRs and N is number responses
                    represents one year of impacts for each IR
+    
+    .. note:: Many of the above recipes can be optimized by replacing global lookups with
+    local variables defined as default values. For example, the dotproduct recipe can be written as
+    
+        def dotproduct(vec1, vec2, sum=sum, imap=imap, mul=operator.mul):
+            return sum(imap(mul, vec1, vec2))
     
     '''
     
