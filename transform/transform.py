@@ -37,23 +37,108 @@
 ###############################
 
 
-import geopandas as gpd
 import xarray as xr
 import numpy as np
 import pandas as pd
-import dask.array as da
+from scipy import interpolate
+from scipy.ndimage import label
+from scipy.interpolate import griddata
+import matplotlib.pyplot as plt
+import seaborn 
+from six import string_types
+import itertools
+
 import glob
 import time
-import datafs
-import ipyparallel
 
-def fill_missing(ds):
+
+
+def fill_holes_xr(ds, varname, broadcast_dims=('time',), lon_name='lon', lat_name='lat', gridsize=0.25, minlat=-85, maxlat=85):
     '''
-    Fills in data at lat,lons where temp ism missing. 
-    This is a post transformation step.
-  
+    Fill NA values inplace in a gridded dataset
+    
+    Parameters
+    ----------
+    
+    ds : xarray.Dataset
+        name of the dataset with variable to be modified
+    
+    varname : str
+        name of the variable to be interpolated
+    
+    broadcast_dims : tuple of strings, optional
+        tuple of dimension names to broadcast the interpolation step over (default 'time')
+    
+    lon_name : str, optional
+        name of the longitude dimension (default 'lon')
+
+    lat_name : str, optional
+        name of the latitude dimension (default 'lat')
+        
+    gridsize : float, optional
+        size of the lat/lon grid. Important for creating a bounding box around NaN regions (default 0.25)
+    
+    minlat : float, optional
+        latitude below which no values will be interpolated (default -85)
+    
+    minlon : float, optional
+        latitude above which no values will be interpolated (default 85)
+    
     '''
     
+    if isinstance(broadcast_dims, string_types):
+        broadcast_dims = (broadcast_dims, )
+
+    ravel_lons, ravel_lats = np.meshgrid(ds.coords[lon_name].values, ds.coords[lat_name].values)
+    
+    # remove infinite values
+    ds[varname] = ds[varname].where((ds[varname] < 1e30))
+    
+    for indexers in itertools.product(*tuple([range(len(ds.coords[c])) for c in broadcast_dims])):
+        slicer_dict = dict(zip(broadcast_dims, indexers))
+        
+        slicer = tuple([slicer_dict[c] if c in broadcast_dims else slice(None, None, None) for c in ds[varname].dims])
+        sliced = ds[varname].values.__getitem__(slicer)
+        
+        if not np.isnan(sliced).any():
+            continue
+
+        filled = fill_holes(
+            var=np.ma.masked_invalid(sliced),
+            lat2=ravel_lats,
+            lon2=ravel_lons,
+            gridsize=0.25,
+            minlat=-85,
+            maxlat=85)
+        
+        ds[varname][slicer_dict] = filled
+        
+    
+def fill_holes(var, lat2, lon2, gridsize=0.25, minlat=-85, maxlat=85):
+    # fill the missing value regions by linear interpolation
+    # pass if no missing values
+    if not np.ma.is_masked(var):
+        return var
+
+    # fill the holes
+    var_filled = var[:]
+    missing = np.where((var.mask == True) & (lat2 > minlat) & (lat2 < maxlat))
+    mp = np.zeros(var.shape)
+    mp[missing] = 1
+    ptch, n_ptch = label(mp)
+    for p in range(1, n_ptch+1):
+        ind_ptch = np.where(ptch == p)
+        lat_ptch = lat2[ind_ptch]
+        lon_ptch = lon2[ind_ptch]
+        ind_box = np.where((lat2 <= np.max(lat_ptch)+gridsize) & (lat2 >= np.min(lat_ptch)-gridsize) & (lon2 <= np.max(lon_ptch)+gridsize) & (lon2 >= np.min(lon_ptch)-gridsize))
+        var_box = var[ind_box]
+        lat_box = lat2[ind_box]
+        lon_box = lon2[ind_box]
+        not_missing = np.where(var_box.mask==False)
+        points = np.column_stack([lon_box[not_missing], lat_box[not_missing]])
+        values = var_box[var_box.mask==False]
+        var_filled[ind_box] = griddata(points, values, (lon_box, lat_box), method='linear')
+    return var_filled
     
 
 
@@ -134,9 +219,6 @@ def _rescale_reshape_weights(df):
         'pix_cent_y': 'latitude_adjusted'
         }, 
         inplace=True)
-
-
-
     
     return df
 
@@ -208,7 +290,6 @@ def transform(path, variable, transformation, frequency, how='mean'):
     res = tr.resample(frequency, 'time', how=how, keep_attrs=True)
 
     return res
-
 
 
 def weighted_avg(data_array, variable, weights, region_id_string, backup_variable='areawt'):
