@@ -348,7 +348,7 @@ Public Functions
 ================
 '''
 
-def load_climate_data(fp, varname, lon_name='lon', lat_name='lat'):
+def load_climate_data(fp, varname, lon_name='lon'):
     '''
     Read and prepare climate data
 
@@ -364,20 +364,22 @@ def load_climate_data(fp, varname, lon_name='lon', lat_name='lat'):
         Variable name to be read
 
     lon_name : str, optional
-        Name of the longitude dimension (defualt 'lon')
-
-    lat_name : str, optional
-        Name of the latitude dimension (defualt 'lat')
+        Name of the longitude dimension (defualt selects from ['lon' or
+        'longitude'])
 
     Returns
     -------
     xr.Dataset
          xarray dataset loaded into memory 
     '''
+
+    if lon_name is not None:
+        lon_names = [lon_name]
+
     with xr.open_dataset(fp) as ds:
 
         filled = _fill_holes_xr(ds.load(), varname)
-        return _standardize_longitude_dimension(filled, lon_name=lon_name)
+        return _standardize_longitude_dimension(filled, lon_names=lon_names)
 
 
 def weighted_aggregate_grid_to_regions(
