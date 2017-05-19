@@ -416,6 +416,6 @@ def weighted_aggregate_grid_to_regions(
 
     region_weights = _prepare_spatial_weights_data(weights_file)
     rdxd = _reindex_spatial_data_to_regions(data, region_weights)
-    wtd = _aggregate_reindexed_data_to_regions(rdxd, socio_variable, df, region_id)
+    wtd = _aggregate_reindexed_data_to_regions(rdxd, socio_variable, region_weights, region_id)
     return wtd
 
