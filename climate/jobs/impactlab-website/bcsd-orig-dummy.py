@@ -95,7 +95,7 @@ def run_job(variable, transformation, rcp, pername, years, model):
 
     # Get transformed data
     transformed = xr.concat([
-        (load_climate_data(BCSD_orig_files.format(**metadata))
+        (load_climate_data(BCSD_orig_files.format(year=y, **metadata))
             .pipe(transformation))
         for y in years],
         dim=pd.Index(years, name='year')).mean(dim='year')
