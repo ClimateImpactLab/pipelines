@@ -8,24 +8,25 @@ import pandas as pd
 from scipy import interpolate
 from scipy.ndimage import label
 from scipy.interpolate import griddata
-# import matplotlib.pyplot as plt
-# import seaborn 
 from six import string_types
 import itertools
 import glob
-import time
 import toolz
-import sys
 import os
-import datafs
-import uploader
 
 WEIGHTS_FILE = os.path.join(
     '/shares/gcp/climate/_spatial_data/world-combo-new/segment_weights',
     'agglomerated-world-new_BCSD_grid_segment_weights_area_pop.csv')
 
 
-def fill_holes_xr(
+
+'''
+=================
+Private Functions
+=================
+'''
+
+def _fill_holes_xr(
         ds,
         varname,
         broadcast_dims=('time',),
@@ -67,7 +68,6 @@ def fill_holes_xr(
         latitude above which no values will be interpolated (default 85)
     
     '''
-    t1 = time.time()
     if isinstance(broadcast_dims, string_types):
         broadcast_dims = (broadcast_dims, )
 
@@ -102,10 +102,9 @@ def fill_holes_xr(
             maxlat=85)
         
         ds[varname][slicer_dict] = filled
-    t2 = time.time()
 
 
-def fill_holes(var, lat, lon, gridsize=0.25, minlat=-85, maxlat=85):
+def _fill_holes(var, lat, lon, gridsize=0.25, minlat=-85, maxlat=85):
     '''
     Interpolates the missing values between points on grid
 
@@ -173,7 +172,7 @@ def fill_holes(var, lat, lon, gridsize=0.25, minlat=-85, maxlat=85):
     return var_filled
 
 
-def _standardize_longitude_dimension(ds):
+def _standardize_longitude_dimension(ds, lon_names=['lon', 'longitude']):
     '''
     Rescales the lat and lon coordinates to ensure lat is within (-90,90) 
     and lon is within (-180, 180). Renames coordinates 
@@ -193,49 +192,34 @@ def _standardize_longitude_dimension(ds):
 
     '''
 
-    coords = ds.coords
-    #name checking, coerce lat and lon to latitude and longitude
-    if ('longitude' not in coords) and ('lon' in coords):
-        ds = ds.rename({'lon': 'longitude'})
-         
-    if 'latitude' in coords:
-        ds = ds.rename({'latitude': 'lat'})
+    coords = np.array(ds.coords.keys())
 
+    assert len(coords[np.in1d(coords, lon_names)]) == 1
+    _lon_coord = coords[np.in1d(coords, ['longitude', 'lon'])][0]
+
+    ds = ds.rename({_lon_coord: '_longitude'})
 
     # Adjust lat and lon to make sure they are within (-90, 90) and (-180, 180)
-    ds['longitude_adjusted'] = (
-        (ds.longitude - 360)
-            .where(ds.longitude > 180)
-            .fillna(ds.longitude))
+    ds['_longitude_adjusted'] = (
+        (ds._longitude - 360)
+            .where(ds._longitude > 180)
+            .fillna(ds._longitude))
 
     # reassign the new coords to as the main lon coords
     ds = (ds
-        .swap_dims({'longitude': 'longitude_adjusted'})
-        .reindex({'longitude_adjusted': sorted(ds.longitude_adjusted)}))
+        .swap_dims({'_longitude': '_longitude_adjusted'})
+        .reindex({'_longitude_adjusted': sorted(ds._longitude_adjusted)}))
 
-    if 'longitude' in ds.coords:
-        ds = ds.drop('longitude')
+    if '_longitude' in ds.coords:
+        ds = ds.drop('_longitude')
 
-    ds = ds.rename({'longitude_adjusted': 'lon'})
-
-    # if ('latitude' not in coords) and ('lon' in coords):
-    #     ds = ds.rename({'lat': 'latitude'})
-
-    # ds['latitude_adjusted'] = (ds.latitude - 180).where(
-    #                             ds.latitude > 90).fillna(ds.latitude)
-    # ds['latitude_adjusted'] = ds.latitude
-
-    # ds = ds.swap_dims({'latitude': 'latitude_adjusted'})
-
-    # if 'latitude' in ds.coords:
-    #     ds = ds.drop('latitude')
-
-    # ds = ds.rename({'latitude_adjusted': 'lat'})
+    ds = ds.rename({'_longitude_adjusted': _lon_coord})
 
     return ds
 
+
 @toolz.memoize
-def _rescale_reshape_weights(weights_file=WEIGHTS_FILE):
+def _prepare_spatial_weights_data(weights_file=WEIGHTS_FILE):
     '''
     Rescales the pix_cent_x colum values
 
@@ -249,6 +233,8 @@ def _rescale_reshape_weights(weights_file=WEIGHTS_FILE):
     '''
 
     df = pd.read_csv(weights_file)
+
+    # Re-label out-of-bounds pixel centers
     df.set_value((df['pix_cent_x'] == 180.125), 'pix_cent_x', -179.875)
 
     #probably totally unnecessary
@@ -261,11 +247,12 @@ def _rescale_reshape_weights(weights_file=WEIGHTS_FILE):
 
     return df
 
-def _reindex(da, df):
+
+def _reindex_spatial_data_to_regions(da, df):
     '''
-    Reshapes and rescales climate data and segment weighted data along the 
-    same axis.
-    Enables index based math operations.
+    Reindexes spatial and segment weight data to regions
+
+    Enables region index-based math operations
 
     Parameters
     ----------
@@ -278,14 +265,15 @@ def _reindex(da, df):
 
 
     ''' 
-    res = da.sel_points('reshape_index', 
-                        lat=df.lat.values, 
-                        lon=df.lon.values)
+    res = da.sel_points(
+        'reshape_index', 
+        lat=df.lat.values, 
+        lon=df.lon.values)
 
     return res
 
 
-def weighted_avg(
+def _aggregate_reindexed_data_to_regions(
         da,
         variable,
         weights_df,
@@ -354,12 +342,29 @@ def weighted_avg(
     return weighted
 
 
-def load(fp):
+'''
+================
+Public Functions
+================
+'''
+
+def load_climate_data(fp, lon_name='lon', lat_name='lat'):
     '''
+    Read and prepare climate data
+
+    After reading data, this method also fills NA values using linear
+    interpolation, and standardizes longitude to -180:180
+
     Parameters
     ----------
     fp: str
         File path to dataset
+
+    lon_name : str, optional
+        Name of the longitude dimension (defualt 'lon')
+
+    lat_name : str, optional
+        Name of the latitude dimension (defualt 'lat')
 
     Returns
     -------
@@ -368,68 +373,12 @@ def load(fp):
     '''
     with xr.open_dataset(fp) as ds:
 
-        filled = fill_holes_xr(ds.load(), 'tas')
-        return _standardize_longitude_dimension(filled)
-
-
-def get_period_data(file_pattern, model, years, transformation):
-    '''
-    Parameters
-    ----------
-    file_pattern: str
-        string representation of file path
-
-    model: str
-        string representation of model
-
-    years: range iterator
-        range of years to itereate through
-
-    transformtion: ufunc
-        transformation to perform on climate data
-
-    Returns
-    -------
-    xr.Dataset
-        concatenates along the year dimension to return the set of climate
-        variables for that model within the range of years
-    '''
-    return xr.concat(
-        [(load(file_pattern.format(year=y, model=model))
-                .pipe(transformation)) for y in years],
-        dim=pd.Index(years, name='year'))
-
-
-def get_period_mean(file_pattern, model, years, transformation):
-    '''
-    Parameters
-    ----------
-    file_pattern: str
-        string representation of file path
-
-    model: str
-        string representation of model
-
-    years: range iterator
-        range of years to itereate through
-
-    transformtion: ufunc
-        transformation to perform on climate data
-
-    Returns
-    -------
-    xr.Dataset
-        takes the mean along the year dimension to return the set of climate
-        variables for that model within the range of years
-    
-    '''
-
-    return (get_period_data(file_pattern, model, years, transformation)
-                .mean(dim='year'))
+        filled = _fill_holes_xr(ds.load(), 'tas')
+        return _standardize_longitude_dimension(filled, lon_name=lon_name)
 
 
 def weighted_aggregate_grid_to_regions(
-        da,
+        data,
         fp,
         socio_variable,
         region_id,
@@ -439,7 +388,7 @@ def weighted_aggregate_grid_to_regions(
 
     Parameters
     ----------
-    da: xr.DataArray
+    data: xr.DataArray
         xarray DataArray to be aggregated. Must have 'lat' and 'lon' in the
         coordinates.
 
@@ -461,8 +410,8 @@ def weighted_aggregate_grid_to_regions(
         weighted and averaged dataset based on region_id
     '''
 
-    df = _rescale_reshape_weights(weights_file)
-    rdxd = _reindex(da, df)
-    wtd = weighted_avg(rdxd, socio_variable, df, region_id)
+    region_weights = _prepare_spatial_weights_data(weights_file)
+    rdxd = _reindex_spatial_data_to_regions(data, region_weights)
+    wtd = _aggregate_reindexed_data_to_regions(rdxd, socio_variable, df, region_id)
     return wtd
 

@@ -9,11 +9,11 @@ and should not be used in production.
 from __future__ import absolute_import
 import os
 import itertools
+import logging
+from functools import reduce
 
 from climate.toolbox import (
-    fill_holes_xr,
-    _standardize_longitude_dimension,
-    get_period_mean,
+    load_climate_data,
     weighted_aggregate_grid_to_regions)
 
 
@@ -61,22 +61,39 @@ def average_seasonal_temp(ds):
     '''
     return ds.tas.groupby({'time': ds['time.season']}).mean(dim='time')
 
+JOBS = [
+    dict(variable='tasmax', transformation=tasmax_over_95F),
+    dict(variable='tasmin', transformation=tasmin_under_32F),
+    dict(variable='tas', transformation=average_seasonal_temp)]
 
-def run_job(var, transformation, pername, years, model):
+PERIODS = [
+    dict(pername='2020', years=[2030]),
+    dict(pername='2040', years=[2050]),
+    dict(pername='2080', years=[2090])]
+
+MODELS = [
+    dict(model='ACCESS1-0'),
+    dict(model='CESM1-BGC'),
+    dict(model='GFDL-ESM2M')]
+
+ITERATION_COMPONENTS = (JOBS, PERIODS, MODELS)
+
+
+def run_job(variable, transformation, pername, years, model):
 
     # Build job metadata
     metadata = {k: v for k, v in ADDITIONAL_METADATA.items()}
-    metadata.update(dict(variable=var, model=model, period=pername))
+    metadata.update(dict(variable=variable, model=model, period=pername))
     metadata['transformation'] = transformation.__doc__
     metadata['time_horizon'] = '{}-{}'.format(years[0], years[-1])
 
     # Get transformed data
-    transformed = get_period_mean(
-        BCSD_orig_files.format(**metadata),
-        model,
-        years,
-        transform_climate_data)
-
+    transformed = xr.concat([
+        (load_climate_data(file_pattern.format(year=y, model=model))
+            .pipe(transformation))
+        for y in years],
+        dim=pd.Index(years, name='year')).mean(dim='year')
+    
     # Reshape to regions
     wtd = weighted_aggregate_grid_to_regions(
             transformed, weights_fp, 'areawt', 'hierid')
@@ -91,26 +108,26 @@ def run_job(var, transformation, pername, years, model):
     wtd.to_netcdf(fp)
 
 
+FORMAT = '%(asctime)-15s %(message)s'
+logging.basicConfig(format=FORMAT)
+logger = logging.getLogger('uploader')
+logger.setLevel('INFO')
+
+
 def main():
 
-    jobs = [
-        ('tasmax', tasmax_over_95F),
-        ('tasmin', tasmin_under_32F),
-        ('tas', average_seasonal_temp)]
+    njobs = reduce(lambda x, y: x*y, map(len, ITERATION_COMPONENTS))
 
-    periods = [
-        ('2020', [2030]),
-        ('2040', [2050]),
-        ('2080', [2090])]
+    for i, job in enumerate(itertools.product(*ITERATION_COMPONENTS)):
+        logger.info('beginning job {} of {}'.format(i, njobs))
 
-    models = ['ACCESS1-0','CESM1-BGC', 'GFDL-ESM2M']
-
-    for job, period, model in itertools.product(jobs, periods, models):
-
-        var, transformation = job
-        pername, years = period
-
-        run_job(var, transformation, pername, years, model)
+        try:
+            run_job(**job)
+        except Exception, e:
+            logger.error(
+                'Error encountered in job {} of {}:\n\nJob spec:\n{}\n\n'
+                    .format(i, njobs, job),
+                exc_info=e)
 
 
 if __name__ == '__main__':
