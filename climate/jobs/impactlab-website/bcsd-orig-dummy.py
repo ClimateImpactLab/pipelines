@@ -25,7 +25,7 @@ __version__ = '0.0.1a1'
 
 BCSD_orig_files = os.path.join(
     '/shares/gcp/sources/BCSD-original/{rcp}/day/atmos/{variable}/r1i1p1/v1.0',
-    '{variable}_day_BCSD_rcp85_r1i1p1_{model}_{year}.nc')
+    '{variable}_day_BCSD_{rcp}_r1i1p1_{model}_{year}.nc')
 
 WRITE_PATH = os.path.join(
     '/shares/gcp/outputs/diagnostics/web/gcp/climate',
