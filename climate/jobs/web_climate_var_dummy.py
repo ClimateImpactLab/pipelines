@@ -100,7 +100,7 @@ def run_job(variable, transformation, pername, years, model):
     
     # Reshape to regions
     wtd = weighted_aggregate_grid_to_regions(
-            transformed, 'areawt', 'hierid')
+            transformed, variable, 'areawt', 'hierid')
 
     # Update netCDF metadata
     wtd.attrs.update(**metadata)

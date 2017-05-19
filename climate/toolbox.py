@@ -276,6 +276,7 @@ def _reindex_spatial_data_to_regions(da, df):
 def _aggregate_reindexed_data_to_regions(
         da,
         variable,
+        weight_variable,
         weights_df,
         region_id_string,
         backup_variable='areawt'):
@@ -288,6 +289,9 @@ def _aggregate_reindexed_data_to_regions(
     da: xarray.DataArray
 
     variable: str
+        name of the data variable
+
+    weight_variable: str
         variable to weight by (i.e popwt, areawt, cropwt)
 
     weight_df: pd.DataFrame
@@ -318,14 +322,14 @@ def _aggregate_reindexed_data_to_regions(
                     .sum(dim='reshape_index'))
 
     # get preferred wieghts
-    da.coords[variable] = xr.DataArray(
-                weights_df[variable].values, dims={'reshape_index':
-                weights_df.index.values})
+    da.coords[weight_variable] = xr.DataArray(
+                weights_df[weight_variable].values,
+                dims={'reshape_index': weights_df.index.values})
 
     ds = da.to_dataset().reset_coords(variable)
 
     weights_preferred = (
-                ds[variable]
+                ds[weight_variable]
                     .groupby(region_id_string)
                     .sum(dim='reshape_index'))
 
@@ -335,7 +339,7 @@ def _aggregate_reindexed_data_to_regions(
                     .fillna(weights_backup))
 
     weighted = (
-                (ds['tasmin']*ds[variable])
+                (ds[variable]*ds[weight_variable])
                     .groupby(region_id_string)
                     .sum(dim='reshape_index')/weights)
 
@@ -384,6 +388,7 @@ def load_climate_data(fp, varname, lon_name='lon'):
 
 def weighted_aggregate_grid_to_regions(
         data,
+        variable,
         socio_variable,
         region_id,
         weights_file=WEIGHTS_FILE):
@@ -395,6 +400,9 @@ def weighted_aggregate_grid_to_regions(
     data: xr.DataArray
         xarray DataArray to be aggregated. Must have 'lat' and 'lon' in the
         coordinates.
+
+    variable: str
+        name of the variable to be aggregated
 
     socio_variable: str
         Weighting variable (e.g. 'popwt', 'areawt'). This must be a column name
@@ -416,6 +424,6 @@ def weighted_aggregate_grid_to_regions(
 
     region_weights = _prepare_spatial_weights_data(weights_file)
     rdxd = _reindex_spatial_data_to_regions(data, region_weights)
-    wtd = _aggregate_reindexed_data_to_regions(rdxd, socio_variable, region_weights, region_id)
+    wtd = _aggregate_reindexed_data_to_regions(rdxd, variable, socio_variable, region_weights, region_id)
     return wtd
 
