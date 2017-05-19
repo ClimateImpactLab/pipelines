@@ -128,8 +128,7 @@ def main():
         logger.info('beginning job {} of {}'.format(i, njobs))
 
         try:
-            print(job)
-            # run_job(**job)
+            run_job(**job)
         except Exception, e:
             logger.error(
                 'Error encountered in job {} of {}:\n\nJob spec:\n{}\n\n'
