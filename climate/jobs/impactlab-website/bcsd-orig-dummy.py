@@ -24,7 +24,7 @@ __contact__ = 'mdelgado@rhg.com'
 __version__ = '0.0.1a1'
 
 BCSD_orig_files = os.path.join(
-    '/shares/gcp/sources/BCSD-original/rcp85/day/atmos/{variable}/r1i1p1/v1.0',
+    '/shares/gcp/sources/BCSD-original/{rcp}/day/atmos/{variable}/r1i1p1/v1.0',
     '{variable}_day_BCSD_rcp85_r1i1p1_{model}_{year}.nc')
 
 WRITE_PATH = os.path.join(
@@ -69,10 +69,10 @@ JOBS = [
     dict(variable='tas', transformation=average_seasonal_temp)]
 
 PERIODS = [
-    dict(pername='1986', years=list(range(1996, 1997)))
-    # dict(pername='2020', years=list(range(2020, 2040))),
-    # dict(pername='2040', years=list(range(2040, 2060))),
-    # dict(pername='2080', years=list(range(2080, 2100)))
+    dict(rcp='hist', pername='1986', years=list(range(1996, 1997)))
+    # dict(rcp='rcp85', pername='2020', years=list(range(2020, 2040))),
+    # dict(rcp='rcp85', pername='2040', years=list(range(2040, 2060))),
+    # dict(rcp='rcp85', pername='2080', years=list(range(2080, 2100)))
     ]
 
 MODELS = [
@@ -83,11 +83,13 @@ MODELS = [
 ITERATION_COMPONENTS = (JOBS, PERIODS, MODELS)
 
 
-def run_job(variable, transformation, pername, years, model):
+def run_job(variable, transformation, rcp, pername, years, model):
 
     # Build job metadata
     metadata = {k: v for k, v in ADDITIONAL_METADATA.items()}
-    metadata.update(dict(variable=variable, model=model, period=pername))
+    metadata.update(dict(
+        variable=variable, model=model, period=pername, rcp=rcp))
+
     metadata['transformation'] = transformation.__doc__
     metadata['time_horizon'] = '{}-{}'.format(years[0], years[-1])
 
