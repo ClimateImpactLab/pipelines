@@ -384,7 +384,6 @@ def load_climate_data(fp, varname, lon_name='lon'):
 
 def weighted_aggregate_grid_to_regions(
         data,
-        fp,
         socio_variable,
         region_id,
         weights_file=WEIGHTS_FILE):
