@@ -105,10 +105,12 @@ WEIGHTS = [{aggwt: 'areawt'}]
 
 AGGREGATIONS = [{aggwt: 'areawt'}]
 
+AGGREGATIONS = [{aggwt: 'areawt'}]
+
 ITERATION_COMPONENTS = (JOBS, PERIODS, MODELS, WEIGHTS, AGGREGATIONS)
 
 
-def run_job(variable, transformation, pername, years, model):
+def run_job(variable, transformation, pername, years, model, aggwt, regions):
 
     # Build job metadata
     metadata = {k: v for k, v in ADDITIONAL_METADATA.items()}

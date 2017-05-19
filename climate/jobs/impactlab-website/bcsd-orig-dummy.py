@@ -64,14 +64,16 @@ def average_seasonal_temp(ds):
     return ds.tas.groupby('time.season').mean(dim='time')
 
 JOBS = [
-    # dict(variable='tasmax', transformation=tasmax_over_95F),
-    # dict(variable='tasmin', transformation=tasmin_under_32F),
+    dict(variable='tasmax', transformation=tasmax_over_95F),
+    dict(variable='tasmin', transformation=tasmin_under_32F),
     dict(variable='tas', transformation=average_seasonal_temp)]
 
 PERIODS = [
-    dict(pername='2020', years=list(range(2020, 2040))),
-    dict(pername='2040', years=list(range(2040, 2060))),
-    dict(pername='2080', years=list(range(2060, 2080)))]
+    dict(pername='1986', years=list(range(1996, 1997)))
+    # dict(pername='2020', years=list(range(2020, 2040))),
+    # dict(pername='2040', years=list(range(2040, 2060))),
+    # dict(pername='2080', years=list(range(2080, 2100)))
+    ]
 
 MODELS = [
     dict(model='ACCESS1-0'),
