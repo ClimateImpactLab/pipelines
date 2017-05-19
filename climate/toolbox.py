@@ -10,7 +10,6 @@ from scipy.ndimage import label
 from scipy.interpolate import griddata
 from six import string_types
 import itertools
-import glob
 import toolz
 import os
 
@@ -18,13 +17,12 @@ WEIGHTS_FILE = os.path.join(
     '/shares/gcp/climate/_spatial_data/world-combo-new/segment_weights',
     'agglomerated-world-new_BCSD_grid_segment_weights_area_pop.csv')
 
-
-
 '''
 =================
 Private Functions
 =================
 '''
+
 
 def _fill_holes_xr(
         ds,
@@ -37,51 +35,51 @@ def _fill_holes_xr(
         maxlat=85):
     '''
     Fill NA values inplace in a gridded dataset
-    
+
     Parameters
     ----------
-    
+
     ds : xarray.Dataset
         name of the dataset with variable to be modified
-    
+
     varname : str
         name of the variable to be interpolated
-    
+
     broadcast_dims : tuple of strings, optional
         tuple of dimension names to broadcast the interpolation step over
         (default 'time')
-    
+
     lon_name : str, optional
         name of the longitude dimension (default 'lon')
 
     lat_name : str, optional
         name of the latitude dimension (default 'lat')
-        
+
     gridsize : float, optional
         size of the lat/lon grid. Important for creating a bounding box around
         NaN regions (default 0.25)
-    
+
     minlat : float, optional
         latitude below which no values will be interpolated (default -85)
-    
+
     minlon : float, optional
         latitude above which no values will be interpolated (default 85)
-    
+
     '''
     if isinstance(broadcast_dims, string_types):
         broadcast_dims = (broadcast_dims, )
 
     ravel_lons, ravel_lats = (
         np.meshgrid(ds.coords[lon_name].values, ds.coords[lat_name].values))
-    
+
     # remove infinite values
     ds[varname] = ds[varname].where((ds[varname] < 1e30))
-    
+
     for indexers in itertools.product(*tuple(
             [range(len(ds.coords[c])) for c in broadcast_dims])):
 
         slicer_dict = dict(zip(broadcast_dims, indexers))
-        
+
         slicer = tuple([
                 slicer_dict[c]
                 if c in broadcast_dims
@@ -89,7 +87,7 @@ def _fill_holes_xr(
                 for c in ds[varname].dims])
 
         sliced = ds[varname].values.__getitem__(slicer)
-        
+
         if not np.isnan(sliced).any():
             continue
 
@@ -100,7 +98,7 @@ def _fill_holes_xr(
             gridsize=0.25,
             minlat=-85,
             maxlat=85)
-        
+
         ds[varname][slicer_dict] = filled
 
 
@@ -111,16 +109,16 @@ def _fill_holes(var, lat, lon, gridsize=0.25, minlat=-85, maxlat=85):
     Parameters
     ----------
     var: masked np.array
-        array of climate values 
+        array of climate values
 
-    lat: masked np.array 
+    lat: masked np.array
         array of latitude values
 
     lon: masked np. array
         array of longitude values
 
     gridsize: int
-        corresponds to degrees on the grid for climate data 
+        corresponds to degrees on the grid for climate data
 
     minlat: int
         corresponds to min latitude values to include. Used to remove poles
@@ -140,7 +138,7 @@ def _fill_holes(var, lat, lon, gridsize=0.25, minlat=-85, maxlat=85):
 
     # fill the holes
     var_filled = var[:]
-    missing = np.where((var.mask == True) & (lat > minlat) & (lat < maxlat))
+    missing = np.where((var.mask) & (lat > minlat) & (lat < maxlat))
     mp = np.zeros(var.shape)
     mp[missing] = 1
     ptch, n_ptch = label(mp)
@@ -160,9 +158,9 @@ def _fill_holes(var, lat, lon, gridsize=0.25, minlat=-85, maxlat=85):
         var_box = var[ind_box]
         lat_box = lat[ind_box]
         lon_box = lon[ind_box]
-        not_missing = np.where(var_box.mask==False)
+        not_missing = np.where(var_box.mask == False)
         points = np.column_stack([lon_box[not_missing], lat_box[not_missing]])
-        values = var_box[var_box.mask==False]
+        values = var_box[var_box.mask == False]
         var_filled[ind_box] = griddata(
                 points,
                 values,
@@ -174,10 +172,10 @@ def _fill_holes(var, lat, lon, gridsize=0.25, minlat=-85, maxlat=85):
 
 def _standardize_longitude_dimension(ds, lon_names=['lon', 'longitude']):
     '''
-    Rescales the lat and lon coordinates to ensure lat is within (-90,90) 
-    and lon is within (-180, 180). Renames coordinates 
+    Rescales the lat and lon coordinates to ensure lat is within (-90,90)
+    and lon is within (-180, 180). Renames coordinates
     from lon to longitude and from lat to latitude. Sorts any new
-    rescaled coordinated. 
+    rescaled coordinated.
 
     Parameters
     ----------
@@ -264,10 +262,10 @@ def _reindex_spatial_data_to_regions(da, df):
     Xarray DataArray
 
 
-    ''' 
+    '''
     res = da.sel_points(
-        'reshape_index', 
-        lat=df.lat.values, 
+        'reshape_index',
+        lat=df.lat.values,
         lon=df.lon.values)
 
     return res
@@ -374,7 +372,7 @@ def load_climate_data(fp, varname, lon_name='lon'):
     Returns
     -------
     xr.Dataset
-         xarray dataset loaded into memory 
+         xarray dataset loaded into memory
     '''
 
     if lon_name is not None:

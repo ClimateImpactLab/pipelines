@@ -30,7 +30,7 @@ BCSD_orig_files = os.path.join(
 
 WRITE_PATH = os.path.join(
     '/shares/gcp/outputs/diagnostics/web/gcp/climate',
-    '{variable}/{variable}_{model}_{pername}.nc')
+    '{variable}/{variable}_{agglev}_{model}_{pername}.nc')
 
 ADDITIONAL_METADATA = dict(
     description=__file__.__doc__,
@@ -69,7 +69,7 @@ def average_seasonal_temp(ds):
 
 
 JOBS = [
-    # dict(variable='tasmax', transformation=tasmax_over_95F),
+    dict(variable='tasmax', transformation=tasmax_over_95F),
     # dict(variable='tasmin', transformation=tasmin_under_32F),
     dict(variable='tas', transformation=average_seasonal_temp)]
 
@@ -101,28 +101,24 @@ MODELS = list(map(lambda x: dict(model=x), [
     'inmcm4',
     'NorESM1-M']))
 
-WEIGHTS = [{aggwt: 'areawt'}]
+AGGREGATIONS = [{'agglev': 'grid025'}]
 
-AGGREGATIONS = [{aggwt: 'areawt'}]
-
-AGGREGATIONS = [{aggwt: 'areawt'}]
-
-ITERATION_COMPONENTS = (JOBS, PERIODS, MODELS, WEIGHTS, AGGREGATIONS)
+ITERATION_COMPONENTS = (JOBS, PERIODS, MODELS, AGGREGATIONS)
 
 
-def run_job(variable, transformation, pername, years, model, aggwt, regions):
+def run_job(variable, transformation, years, **kwargs):
 
     # Build job metadata
     metadata = {k: v for k, v in ADDITIONAL_METADATA.items()}
     metadata.update({
         'variable': variable,
         'transformation': transformation,
-        'pername': pername,
-        'years': years,
-        'model': model})
+        'years': '{}-{}'.format(sorted(years)[0], sorted(years)[-1])})
+
+    metadata.update(**kwargs)
 
     # Get transformed data
-    transformed = xr.concat([
+    ds = xr.concat([
         (load_climate_data(
             BCSD_orig_files.format(**metadata),
                 variable)
@@ -131,17 +127,17 @@ def run_job(variable, transformation, pername, years, model, aggwt, regions):
         dim=pd.Index(years, name='year')).mean(dim='year')
     
     # Reshape to regions
-    wtd = weighted_aggregate_grid_to_regions(
-            transformed, variable, 'areawt', 'hierid')
+    # ds = weighted_aggregate_grid_to_regions(
+    #         ds, variable, aggwt, agglev)
 
     # Update netCDF metadata
-    wtd.attrs.update(**metadata)
+    ds.attrs.update(**metadata)
 
     # Write output
     fp = WRITE_PATH.format(**metadata)
     if not os.path.isdir(os.path.dirname(fp)):
         os.makedirs(os.path.dirname(fp))
-    wtd.to_netcdf(fp)
+    ds.to_netcdf(fp)
 
 
 FORMAT = '%(asctime)-15s %(message)s'
@@ -150,12 +146,12 @@ logger = logging.getLogger('uploader')
 logger.setLevel('INFO')
 
 
-def main():
+def main(iteration_components=ITERATION_COMPONENTS):
 
-    njobs = reduce(lambda x, y: x*y, map(len, ITERATION_COMPONENTS))
+    njobs = reduce(lambda x, y: x*y, map(len, iteration_components))
 
     for i, job_components in enumerate(
-            itertools.product(*ITERATION_COMPONENTS)):
+            itertools.product(*iteration_components)):
 
         job = {}
         for job_component in job_components:
