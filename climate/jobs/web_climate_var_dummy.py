@@ -118,11 +118,18 @@ def main():
 
     njobs = reduce(lambda x, y: x*y, map(len, ITERATION_COMPONENTS))
 
-    for i, job in enumerate(itertools.product(*ITERATION_COMPONENTS)):
+    for i, job_components in enumerate(
+            itertools.product(*ITERATION_COMPONENTS)):
+
+        job = {}
+        for job_component in job_components:
+            job.update(job_component)
+
         logger.info('beginning job {} of {}'.format(i, njobs))
 
         try:
-            run_job(**job)
+            print(job)
+            # run_job(**job)
         except Exception, e:
             logger.error(
                 'Error encountered in job {} of {}:\n\nJob spec:\n{}\n\n'
