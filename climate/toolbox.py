@@ -378,8 +378,8 @@ def load_climate_data(fp, varname, lon_name='lon'):
 
     with xr.open_dataset(fp) as ds:
 
-        filled = _fill_holes_xr(ds.load(), varname)
-        return _standardize_longitude_dimension(filled, lon_names=lon_names)
+        _fill_holes_xr(ds.load(), varname)
+        return _standardize_longitude_dimension(ds, lon_names=lon_names)
 
 
 def weighted_aggregate_grid_to_regions(
