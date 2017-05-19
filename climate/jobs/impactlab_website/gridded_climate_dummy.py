@@ -75,9 +75,9 @@ JOBS = [
 
 PERIODS = [
     dict(rcp='historical', pername='1986', years=list(range(1986, 2006))),
-    # dict(pername='2020-2039', years=[2030]),
-    # dict(pername='2040-2059', years=[2050]),
-    dict(pername='2080-2099', years=[2090])]
+    # dict(rcp='rcp85', pername='2020-2039', years=[2030]),
+    # dict(rcp='rcp85', pername='2040-2059', years=[2050]),
+    dict(rcp='rcp85', pername='2080-2099', years=[2090])]
 
 MODELS = list(map(lambda x: dict(model=x), [
     'ACCESS1-0',
@@ -121,7 +121,7 @@ def run_job(variable, transformation, years, **kwargs):
     # Get transformed data
     ds = xr.concat([
         (load_climate_data(
-            BCSD_orig_files.format(**metadata),
+            BCSD_orig_files.format(year=y, **metadata),
                 variable)
             .pipe(transformation))
         for y in years],
