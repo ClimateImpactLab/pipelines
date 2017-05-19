@@ -61,11 +61,11 @@ def average_seasonal_temp(ds):
     '''
     Average seasonal tas
     '''
-    return ds.tas.groupby('time.season').sum(dim='time')
+    return ds.tas.groupby('time.season').mean(dim='time')
 
 JOBS = [
-    dict(variable='tasmax', transformation=tasmax_over_95F),
-    dict(variable='tasmin', transformation=tasmin_under_32F),
+    # dict(variable='tasmax', transformation=tasmax_over_95F),
+    # dict(variable='tasmin', transformation=tasmin_under_32F),
     dict(variable='tas', transformation=average_seasonal_temp)]
 
 PERIODS = [
