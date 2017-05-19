@@ -25,7 +25,7 @@ __version__ = '0.0.1a1'
 
 BCSD_orig_files = os.path.join(
     '/shares/gcp/sources/BCSD-original/rcp85/day/atmos/{variable}/r1i1p1/v1.0',
-    '{variable}_day_BCSD_rcp85_r1i1p1_{model}_{period}.nc')
+    '{variable}_day_BCSD_rcp85_r1i1p1_{model}_{year}.nc')
 
 WRITE_PATH = os.path.join(
     '/shares/gcp/outputs/diagnostics/web/gcp/climate',
@@ -91,7 +91,8 @@ def run_job(variable, transformation, pername, years, model):
 
     # Get transformed data
     transformed = xr.concat([
-        (load_climate_data(BCSD_orig_files.format(year=y, model=model))
+        (load_climate_data(
+            BCSD_orig_files.format(year=y, model=model, variable=variable))
             .pipe(transformation))
         for y in years],
         dim=pd.Index(years, name='year')).mean(dim='year')
