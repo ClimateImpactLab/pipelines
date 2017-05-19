@@ -348,7 +348,7 @@ Public Functions
 ================
 '''
 
-def load_climate_data(fp, lon_name='lon', lat_name='lat'):
+def load_climate_data(fp, varname, lon_name='lon', lat_name='lat'):
     '''
     Read and prepare climate data
 
@@ -359,6 +359,9 @@ def load_climate_data(fp, lon_name='lon', lat_name='lat'):
     ----------
     fp: str
         File path to dataset
+
+    varname: str
+        Variable name to be read
 
     lon_name : str, optional
         Name of the longitude dimension (defualt 'lon')
@@ -373,7 +376,7 @@ def load_climate_data(fp, lon_name='lon', lat_name='lat'):
     '''
     with xr.open_dataset(fp) as ds:
 
-        filled = _fill_holes_xr(ds.load(), 'tas')
+        filled = _fill_holes_xr(ds.load(), varname)
         return _standardize_longitude_dimension(filled, lon_name=lon_name)
 
 
