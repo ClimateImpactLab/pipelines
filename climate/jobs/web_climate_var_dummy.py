@@ -11,6 +11,8 @@ import os
 import itertools
 import logging
 from functools import reduce
+import xarray as xr
+import pandas as pd
 
 from climate.toolbox import (
     load_climate_data,
