@@ -61,7 +61,7 @@ def average_seasonal_temp(ds):
     '''
     Average seasonal tas
     '''
-    return ds.tas.groupby({'time': ds['time.season']}).mean(dim='time')
+    return ds.groupby({'time': ds['time.season']}).tas.mean(dim='time')
 
 JOBS = [
     dict(variable='tasmax', transformation=tasmax_over_95F),
@@ -100,7 +100,7 @@ def run_job(variable, transformation, pername, years, model):
     
     # Reshape to regions
     wtd = weighted_aggregate_grid_to_regions(
-            transformed, weights_fp, 'areawt', 'hierid')
+            transformed, 'areawt', 'hierid')
 
     # Update netCDF metadata
     wtd.attrs.update(**metadata)
