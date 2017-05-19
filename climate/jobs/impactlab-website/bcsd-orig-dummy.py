@@ -69,7 +69,7 @@ JOBS = [
     dict(variable='tas', transformation=average_seasonal_temp)]
 
 PERIODS = [
-    dict(rcp='hist', pername='1986', years=list(range(1996, 1997)))
+    dict(rcp='historical', pername='1986', years=list(range(1996, 1997)))
     # dict(rcp='rcp85', pername='2020', years=list(range(2020, 2040))),
     # dict(rcp='rcp85', pername='2040', years=list(range(2040, 2060))),
     # dict(rcp='rcp85', pername='2080', years=list(range(2080, 2100)))
