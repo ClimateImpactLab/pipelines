@@ -25,8 +25,8 @@ __contact__ = 'mdelgado@rhg.com'
 __version__ = '0.0.1a1'
 
 BCSD_orig_files = os.path.join(
-    '/shares/gcp/sources/BCSD-original/rcp85/day/atmos/{variable}/r1i1p1/v1.0',
-    '{variable}_day_BCSD_rcp85_r1i1p1_{model}_{year}.nc')
+    '/shares/gcp/sources/BCSD-original/{rcp}/day/atmos/{variable}/r1i1p1/v1.0',
+    '{variable}_day_BCSD_{rcp}_r1i1p1_{model}_{year}.nc')
 
 WRITE_PATH = os.path.join(
     '/shares/gcp/outputs/diagnostics/web/gcp/climate',
@@ -74,8 +74,9 @@ JOBS = [
     dict(variable='tas', transformation=average_seasonal_temp)]
 
 PERIODS = [
-    dict(pername='2020-2039', years=[2030]),
-    dict(pername='2040-2059', years=[2050]),
+    dict(rcp='historical', pername='1986', years=list(range(1986, 2006))),
+    # dict(pername='2020-2039', years=[2030]),
+    # dict(pername='2040-2059', years=[2050]),
     dict(pername='2080-2099', years=[2090])]
 
 MODELS = list(map(lambda x: dict(model=x), [
