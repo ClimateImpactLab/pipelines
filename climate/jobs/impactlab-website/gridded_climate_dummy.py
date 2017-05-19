@@ -16,7 +16,8 @@ import pandas as pd
 
 from climate.toolbox import (
     load_climate_data,
-    weighted_aggregate_grid_to_regions)
+    weighted_aggregate_grid_to_regions,
+    document)
 
 
 __author__ = 'Michael Delgado'
@@ -29,7 +30,7 @@ BCSD_orig_files = os.path.join(
 
 WRITE_PATH = os.path.join(
     '/shares/gcp/outputs/diagnostics/web/gcp/climate',
-    '{variable}/{variable}_{model}_{period}.nc')
+    '{variable}/{variable}_{model}_{pername}.nc')
 
 ADDITIONAL_METADATA = dict(
     description=__file__.__doc__,
@@ -43,6 +44,7 @@ ADDITIONAL_METADATA = dict(
     frequency='year_sample')
 
 
+@document
 def tasmin_under_32F(ds):
     '''
     Count of days with tasmin under 32F/0C
@@ -50,6 +52,7 @@ def tasmin_under_32F(ds):
     return ds.tasmin.where((ds.tasmin- 273.15) < 0).count(dim='time')
 
 
+@document
 def tasmax_over_95F(ds):
     '''
     Count of days with tasmax over 95F/35C
@@ -57,11 +60,13 @@ def tasmax_over_95F(ds):
     return ds.tasmax.where((ds.tasmax- 273.15) > 35).count(dim='time')
 
 
+@document
 def average_seasonal_temp(ds):
     '''
     Average seasonal tas
     '''
     return ds.tas.groupby('time.season').mean(dim='time')
+
 
 JOBS = [
     # dict(variable='tasmax', transformation=tasmax_over_95F),
@@ -69,30 +74,55 @@ JOBS = [
     dict(variable='tas', transformation=average_seasonal_temp)]
 
 PERIODS = [
-    dict(pername='2020', years=[2030]),
-    dict(pername='2040', years=[2050]),
-    dict(pername='2080', years=[2090])]
+    dict(pername='2020-2039', years=[2030]),
+    dict(pername='2040-2059', years=[2050]),
+    dict(pername='2080-2099', years=[2090])]
 
-MODELS = [
-    dict(model='ACCESS1-0'),
-    dict(model='CESM1-BGC'),
-    dict(model='GFDL-ESM2M')]
+MODELS = list(map(lambda x: dict(model=x), [
+    'ACCESS1-0',
+    'bcc-csm1-1',
+    'BNU-ESM',
+    'CanESM2',
+    'CCSM4',
+    'CESM1-BGC',
+    'CNRM-CM5',
+    'CSIRO-Mk3-6-0',
+    'GFDL-CM3',
+    'GFDL-ESM2G',
+    'GFDL-ESM2M',
+    'IPSL-CM5A-LR',
+    'IPSL-CM5A-MR',
+    'MIROC-ESM-CHEM',
+    'MIROC-ESM',
+    'MIROC5',
+    'MPI-ESM-LR',
+    'MPI-ESM-MR',
+    'MRI-CGCM3',
+    'inmcm4',
+    'NorESM1-M']))
 
-ITERATION_COMPONENTS = (JOBS, PERIODS, MODELS)
+WEIGHTS = [{aggwt: 'areawt'}]
+
+AGGREGATIONS = [{aggwt: 'areawt'}]
+
+ITERATION_COMPONENTS = (JOBS, PERIODS, MODELS, WEIGHTS, AGGREGATIONS)
 
 
 def run_job(variable, transformation, pername, years, model):
 
     # Build job metadata
     metadata = {k: v for k, v in ADDITIONAL_METADATA.items()}
-    metadata.update(dict(variable=variable, model=model, period=pername))
-    metadata['transformation'] = transformation.__doc__
-    metadata['time_horizon'] = '{}-{}'.format(years[0], years[-1])
+    metadata.update({
+        'variable': variable,
+        'transformation': transformation,
+        'pername': pername,
+        'years': years,
+        'model': model})
 
     # Get transformed data
     transformed = xr.concat([
         (load_climate_data(
-            BCSD_orig_files.format(year=y, model=model, variable=variable),
+            BCSD_orig_files.format(**metadata),
                 variable)
             .pipe(transformation))
         for y in years],

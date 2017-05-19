@@ -427,3 +427,17 @@ def weighted_aggregate_grid_to_regions(
     wtd = _aggregate_reindexed_data_to_regions(rdxd, variable, socio_variable, region_weights, region_id)
     return wtd
 
+
+class _DocFunc(object):
+    def __init__(self, func):
+        self._func = func
+
+    def __str__(self):
+        return self._func.__doc__.strip()
+
+    def __call__(self, *args, **kwargs):
+        return self._func(*args, **kwargs)
+
+
+def document(func):
+    return _DocFunc(func)
