@@ -93,7 +93,7 @@ def _fill_holes_xr(
         if not np.isnan(sliced).any():
             continue
 
-        filled = fill_holes(
+        filled = _fill_holes(
             var=np.ma.masked_invalid(sliced),
             lat=ravel_lats,
             lon=ravel_lons,
