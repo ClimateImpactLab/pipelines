@@ -6,20 +6,20 @@ is that this data be representative of the variables presented, it is not final
 and should not be used in production.
 '''
 
+from __future__ import absolute_import
 import os
 import itertools
 
-__author__ = 'Michael Delgado'
-__contact__ = 'mdelgado@rhg.com'
-__version__ = '0.0.1a1'
-
-
-from toolbox import (
+from climate.toolbox import (
     fill_holes_xr,
     _standardize_longitude_dimension,
     get_period_mean,
     weighted_aggregate_grid_to_regions)
 
+
+__author__ = 'Michael Delgado'
+__contact__ = 'mdelgado@rhg.com'
+__version__ = '0.0.1a1'
 
 BCSD_orig_files = os.path.join(
     '/shares/gcp/sources/BCSD-original/rcp85/day/atmos/{variable}/r1i1p1/v1.0',
