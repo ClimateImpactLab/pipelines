@@ -45,6 +45,7 @@ ADDITIONAL_METADATA = dict(
     frequency='20yr')
 
 
+@document
 def tasmin_under_32F(ds):
     '''
     Count of days with tasmin under 32F/0C
@@ -52,6 +53,7 @@ def tasmin_under_32F(ds):
     return ds.tasmin.where((ds.tasmin- 273.15) < 0).count(dim='time')
 
 
+@document
 def tasmax_over_95F(ds):
     '''
     Count of days with tasmax over 95F/35C
@@ -59,6 +61,7 @@ def tasmax_over_95F(ds):
     return ds.tasmax.where((ds.tasmax- 273.15) > 35).count(dim='time')
 
 
+@document
 def average_seasonal_temp(ds):
     '''
     Average seasonal tas
