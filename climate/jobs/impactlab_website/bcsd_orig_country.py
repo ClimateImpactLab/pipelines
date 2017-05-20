@@ -1,5 +1,5 @@
 '''
-Processed BCSD-orig 20-year average IR-level data by model
+Processed BCSD-orig 20-year average country-level data by model
 
 Aggregated to impact regions using area weights. Produced from BCSD-originals
 using the GCP climate toolbox at https://github.com/ClimateImpactLab/pipelines
@@ -23,12 +23,12 @@ __contact__ = 'mdelgado@rhg.com'
 __version__ = '0.1.0'
 
 BCSD_orig_files = os.path.join(
-    '/shares/gcp/sources/BCSD-original/{rcp}/day/atmos/{variable}/r1i1p1/v1.0',
-    '{variable}_day_BCSD_{rcp}_r1i1p1_{model}_{year}.nc')
+    '/shares/gcp/sources/BCSD-original/{scenario}/day/atmos/{variable}',
+    'r1i1p1/v1.0/{variable}_day_BCSD_{scenario}_r1i1p1_{model}_{year}.nc')
 
 WRITE_PATH = os.path.join(
-    '/shares/gcp/outputs/diagnostics/web/gcp/climate',
-    '{variable}/{variable}_{model}_{period}.nc')
+    '/shares/gcp/outputs/temps/web/gcp/climate/{scenario}/{agglev}/{variable}',
+    '{variable}_{agglev}_{aggwt}_{model}_{pername}.nc')
 
 ADDITIONAL_METADATA = dict(
     description=__file__.__doc__,
@@ -66,15 +66,15 @@ def average_seasonal_temp(ds):
     return ds.tas.groupby('time.season').mean(dim='time')
 
 JOBS = [
-    dict(variable='tasmax', transformation=tasmax_over_95F),
-    dict(variable='tasmin', transformation=tasmin_under_32F),
+    # dict(variable='tasmax', transformation=tasmax_over_95F),
+    # dict(variable='tasmin', transformation=tasmin_under_32F),
     dict(variable='tas', transformation=average_seasonal_temp)]
 
 PERIODS = [
-    dict(rcp='historical', pername='1986', years=list(range(1986, 2006))),
-    dict(rcp='rcp85', pername='2020', years=list(range(2020, 2040))),
-    dict(rcp='rcp85', pername='2040', years=list(range(2040, 2060))),
-    dict(rcp='rcp85', pername='2080', years=list(range(2080, 2100)))]
+    dict(scenario='historical', pername='1986', years=list(range(1986, 2006))),
+    dict(scenario='rcp85', pername='2020', years=list(range(2020, 2040))),
+    dict(scenario='rcp85', pername='2040', years=list(range(2040, 2060))),
+    dict(scenario='rcp85', pername='2080', years=list(range(2080, 2100)))]
 
 MODELS = list(map(lambda x: dict(model=x), [
     'ACCESS1-0',
@@ -99,42 +99,47 @@ MODELS = list(map(lambda x: dict(model=x), [
     'inmcm4',
     'NorESM1-M']))
 
-AGGREGATIONS = [{'agglev': 'grid025'}]
+AGGREGATIONS = [{'agglev': 'ISO', 'aggwt': 'areawt'}]
 
 ITERATION_COMPONENTS = (JOBS, PERIODS, MODELS, AGGREGATIONS)
 
 
-def run_job(variable, transformation, rcp, pername, years, model, agglev, weights):
+def run_job(variable, transformation, years, **kwargs):
+
+    aggwt, agglev = kwargs.get(aggwt, 'popwt'), kwargs.get(agglev, 'hierid')
 
     # Build job metadata
     metadata = {k: v for k, v in ADDITIONAL_METADATA.items()}
-    metadata.update(dict(
-        variable=variable, model=model, period=pername, rcp=rcp))
+    metadata.update({
+        'variable': variable,
+        'transformation': transformation,
+        'years': '{}-{}'.format(sorted(years)[0], sorted(years)[-1])},
+        'aggwt': aggwt,
+        'agglev': agglev)
 
-    metadata['transformation'] = transformation.__doc__
-    metadata['time_horizon'] = '{}-{}'.format(years[0], years[-1])
+    metadata.update(**kwargs)
 
     # Get transformed data
-    transformed = xr.concat([
+    ds = xr.concat([
         (load_climate_data(
-                    BCSD_orig_files.format(year=y, **metadata),
-                    variable)
+            BCSD_orig_files.format(year=y, **metadata),
+                variable)
             .pipe(transformation))
         for y in years],
         dim=pd.Index(years, name='year')).mean(dim='year')
     
-    # Reshape to regions
-    wtd = weighted_aggregate_grid_to_regions(
-            transformed, variable, 'areawt', 'hierid')
+    Reshape to regions
+    ds = weighted_aggregate_grid_to_regions(
+            ds, variable, aggwt, agglev)
 
     # Update netCDF metadata
-    wtd.attrs.update(**metadata)
+    ds.attrs.update(**metadata)
 
     # Write output
     fp = WRITE_PATH.format(**metadata)
     if not os.path.isdir(os.path.dirname(fp)):
         os.makedirs(os.path.dirname(fp))
-    wtd.to_netcdf(fp)
+    ds.to_netcdf(fp)
 
 
 FORMAT = '%(asctime)-15s %(message)s'
