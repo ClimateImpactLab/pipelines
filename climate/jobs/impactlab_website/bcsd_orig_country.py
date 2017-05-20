@@ -15,7 +15,8 @@ import pandas as pd
 
 from climate.toolbox import (
     load_climate_data,
-    weighted_aggregate_grid_to_regions)
+    weighted_aggregate_grid_to_regions,
+    document)
 
 
 __author__ = 'Michael Delgado'
