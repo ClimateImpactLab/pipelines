@@ -113,9 +113,9 @@ def run_job(variable, transformation, years, **kwargs):
     metadata.update({
         'variable': variable,
         'transformation': transformation,
-        'years': '{}-{}'.format(sorted(years)[0], sorted(years)[-1])},
+        'years': '{}-{}'.format(sorted(years)[0], sorted(years)[-1]),
         'aggwt': aggwt,
-        'agglev': agglev)
+        'agglev': agglev})
 
     metadata.update(**kwargs)
 
