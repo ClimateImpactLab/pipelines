@@ -106,7 +106,7 @@ ITERATION_COMPONENTS = (JOBS, PERIODS, MODELS, AGGREGATIONS)
 
 def run_job(variable, transformation, years, **kwargs):
 
-    aggwt, agglev = kwargs.get(aggwt, 'popwt'), kwargs.get(agglev, 'hierid')
+    aggwt, agglev = kwargs.get('aggwt', 'popwt'), kwargs.get('agglev', 'hierid')
 
     # Build job metadata
     metadata = {k: v for k, v in ADDITIONAL_METADATA.items()}
