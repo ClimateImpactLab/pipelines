@@ -27,7 +27,7 @@ BCSD_orig_files = os.path.join(
     'r1i1p1/v1.0/{variable}_day_BCSD_{scenario}_r1i1p1_{model}_{year}.nc')
 
 WRITE_PATH = os.path.join(
-    '/shares/gcp/outputs/temps/web/gcp/climate/{scenario}/{agglev}/{variable}',
+    '/shares/gcp/outputs/diagnostics/web/gcp/climate/{scenario}/{agglev}/{variable}',
     '{variable}_{agglev}_{aggwt}_{model}_{pername}.nc')
 
 ADDITIONAL_METADATA = dict(
