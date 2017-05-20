@@ -128,7 +128,7 @@ def run_job(variable, transformation, years, **kwargs):
         for y in years],
         dim=pd.Index(years, name='year')).mean(dim='year')
     
-    Reshape to regions
+    # Reshape to regions
     ds = weighted_aggregate_grid_to_regions(
             ds, variable, aggwt, agglev)
 
