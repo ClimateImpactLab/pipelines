@@ -359,7 +359,7 @@ Public Functions
 ================
 '''
 
-def load_climate_data(fp, varname, lon_name='lon'):
+def load_climate_data(fp, varname, lon_name='lon', broadcast_dims=('time',)):
     '''
     Read and prepare climate data
 
@@ -389,7 +389,7 @@ def load_climate_data(fp, varname, lon_name='lon'):
 
     with xr.open_dataset(fp) as ds:
 
-        _fill_holes_xr(ds.load(), varname)
+        _fill_holes_xr(ds.load(), varname, broadcast_dims=broadcast_dims)
         return _standardize_longitude_dimension(ds, lon_names=lon_names)
 
 
@@ -502,7 +502,7 @@ def pattern_transform(
 
     # Get transformed data
     ds = xr.concat([
-        (load_climate_data(pattern_file.format(year=y), variable)
+        (load_climate_data(pattern_file.format(year=y), variable, broadcast_dims=('day',))
             .pipe(transformation))
         for y in years],
         dim=pd.Index(years, name='year')).mean(dim='year')
