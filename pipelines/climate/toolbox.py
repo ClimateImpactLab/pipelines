@@ -13,6 +13,9 @@ import itertools
 import toolz
 import os
 import datafs
+import click
+import dill
+import pipelines
 
 WEIGHTS_FILE = (
     'GCP/spatial/world-combo-new/segment_weights/' +
@@ -443,6 +446,9 @@ def bcsd_transform(
         agglev,
         aggwt):
 
+    # Load pickled transformation
+    transformation = pipelines.load_func(transformation)
+
     # Add to job metadata
     metadata.update(dict(
         time_horizon='{}-{}'.format(years[0], years[-1])))
@@ -470,3 +476,17 @@ def bcsd_transform(
         os.makedirs(os.path.dirname(fp))
 
     ds.to_netcdf(fp)
+
+
+@click.command()
+@click.argument('command')
+@click.argument('kwargs')
+def main(command, kwargs):
+
+    kwargs = dill.load(kwargs)
+
+    if command in globals():
+        globals()['command'](**kwargs)
+
+if __name__ == '__main__':
+    main()

@@ -7,6 +7,8 @@ import numpy as np
 import shutil
 import os
 import tempfile
+import dill
+import inspect
 
 from contextlib import contextmanager
 
@@ -85,6 +87,15 @@ class JobRunner(object):
                     'Error encountered in job {} of {}:\nJob spec:\n{}\n'
                         .format(i, self._njobs, job),
                     exc_info=e)
+
+    def run_slurm(self):
+
+        for i, job in enumerate(self._get_jobs()):
+            # logger.info('beginning job {} of {}'.format(i, self._njobs))
+            print('slurm python -m pipelines.climate.toolbox {} \'{}\''.format(
+                self._func.__name__,
+                dill.dumps(job)))
+
 
     def test(self):
         '''
@@ -194,16 +205,22 @@ def run(workers=1):
     return decorator
 
 
-class _DocFunc(object):
-    def __init__(self, func):
-        self._func = func
+def prep_func(func):
 
-    def __str__(self):
-        return self._func.__doc__.strip()
+    funcname = '.'.join([inspect.getmodule(func).__name__, func.__name__])
 
-    def __call__(self, *args, **kwargs):
-        return self._func(*args, **kwargs)
+    if not os.path.isdir('pipes'):
+        os.makedirs('pipes')
+
+    fp = 'pipes/{}'.format(funcname)
+    
+    with open(fp, 'wb+') as f:
+        pickled = dill.dump(func, f)
+
+    return funcname
 
 
-def document(func):
-    return _DocFunc(func)
+def load_func(func):
+    fp = 'pipes/{}'.format(func)
+    with open(fp, 'rb') as f:
+        return dill.load(f)
