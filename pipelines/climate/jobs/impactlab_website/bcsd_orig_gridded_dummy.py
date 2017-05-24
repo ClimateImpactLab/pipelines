@@ -8,11 +8,6 @@ and should not be used in production.
 
 from __future__ import absolute_import
 import os
-import itertools
-import logging
-from functools import reduce
-import xarray as xr
-import pandas as pd
 
 import pipelines
 import pipelines.climate.transformations as trn
@@ -86,7 +81,7 @@ AGGREGATIONS = [{'agglev': 'grid025', 'aggwt': 'unweighted'}]
 @pipelines.add_metadata(ADDITIONAL_METADATA)
 @pipelines.read_pattern(BCSD_orig_files)
 @pipelines.write_pattern(WRITE_PATH)
-@pipelines.iter(JOBS, PERIODS, MODELS, AGGREGATIONS)
+@pipelines.iterate(JOBS, PERIODS, MODELS, AGGREGATIONS)
 @pipelines.run(workers=1)
 def bcsd_orig_gridded_dummy(*args, **kwargs):
     bcsd_transform(*args, **kwargs)

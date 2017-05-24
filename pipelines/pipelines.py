@@ -23,6 +23,9 @@ def temporary_dir():
 
 
 class JobRunner(object):
+    '''
+    Generalized job dispatch class
+    '''
 
     def __init__(
             self,
@@ -60,10 +63,17 @@ class JobRunner(object):
         self._func(read_pattern, write_pattern, metadata=metadata, **job)
 
     def run(self):
+        '''
+        Invoke a full run for the specified job set
+        '''
+
         for job in self._get_jobs():
             _run_one_job(job, self._read_pattern, self._write_pattern)
 
     def test(self):
+        '''
+        Test the specified run using dummy data
+        '''
 
         i = None
 
@@ -123,15 +133,6 @@ def register(name):
     return decorator
 
 
-def run(workers=1):
-    def decorator(func):
-        def inner(*args, **kwargs):
-            kwargs.update(dict(func=func, workers=workers))
-            return JobRunner(*args, **kwargs)
-        return inner
-    return decorator
-
-
 def read_pattern(patt):
     def decorator(func):
         def inner(*args, **kwargs):
@@ -150,7 +151,7 @@ def write_pattern(patt):
     return decorator
 
 
-def iter(*iters):
+def iterate(*iters):
     def decorator(func):
         def inner(*args, **kwargs):
             kwargs.update(dict(iteration_components=iters))
@@ -164,6 +165,15 @@ def add_metadata(metadata):
         def inner(*args, **kwargs):
             kwargs.update(dict(metadata=metadata))
             return func(*args, **kwargs)
+        return inner
+    return decorator
+
+
+def run(workers=1):
+    def decorator(func):
+        def inner(*args, **kwargs):
+            kwargs.update(dict(func=func, workers=workers))
+            return JobRunner(*args, **kwargs)
         return inner
     return decorator
 
