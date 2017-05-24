@@ -160,7 +160,7 @@ class JobRunner(object):
             kwargs['metadata'] = metadata
 
             # logger.info('beginning job {} of {}'.format(i, self._njobs))
-            os.system("srun {flags} run python -m {module} {func} '{job}'".format(
+            os.system("srun {flags} python -m {module} {func} '{job}'".format(
                 flags=' '.join(run_flags),
                 module=func.__module__,
                 func=func.__name__,
