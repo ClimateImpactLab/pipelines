@@ -19,12 +19,12 @@ __author__ = 'Michael Delgado'
 __contact__ = 'mdelgado@rhg.com'
 __version__ = '0.1.0'
 
-BCSD_orig_files = os.path.join(
-    '/shares/gcp/sources/BCSD-original/{rcp}/day/atmos/{variable}/r1i1p1/v1.0',
+BCSD_orig_files = (
+    '/shares/gcp/sources/BCSD-original/{rcp}/day/atmos/{variable}/r1i1p1/v1.0/' +
     '{variable}_day_BCSD_{rcp}_r1i1p1_{model}_{year}.nc')
 
 WRITE_PATH = os.path.join(
-    '/shares/gcp/outputs/diagnostics/web/test/climate/{agglev}/{scenario}',
+    '/shares/gcp/outputs/diagnostics/web/test/climate/{agglev}/{rcp}',
     '{variable}/{variable}_{model}_{period}.nc')
 
 ADDITIONAL_METADATA = dict(
