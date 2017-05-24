@@ -10,7 +10,7 @@ try:
 except ImportError:
     from imp import load_module as import_module
 
-things = []
+# things = []
 
 def check_module(path):
     if not str(path).endswith('.py'):
@@ -54,16 +54,16 @@ class PipelineModule(pytest.Module):
             #     continue
 
             try:
-                things.append(obj)
+                # things.append(obj)
                 item = obj()
                 
-                # if isinstance(item, pipelines.JobCreator):
-                things.append(item)
+                # if isinstance(obj, pipelines.JobRunner):
+                    # things.append(obj)
                 yield BCSDItem(name, self, item)
 
-            except IOError:
-                things.append(item)
-                raise ValueError(things)
+            # except IOError:
+                # things.append(item)
+                # raise ValueError(things)
 
             except (TypeError, AttributeError):
                 pass

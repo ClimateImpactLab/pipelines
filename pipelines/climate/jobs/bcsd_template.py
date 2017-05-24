@@ -84,3 +84,6 @@ AGGREGATIONS = [{'agglev': 'grid025', 'aggwt': 'unweighted'}]
 @pipelines.run(workers=1)
 def web_bcsd_climate_data_template(*args, **kwargs):
     bcsd_transform(*args, **kwargs)
+
+if __name__ == '__main__':
+    web_bcsd_climate_data_template().run()

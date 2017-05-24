@@ -10,6 +10,13 @@ import tempfile
 
 from contextlib import contextmanager
 
+import logging
+
+FORMAT = '%(asctime)-15s %(message)s'
+logging.basicConfig(format=FORMAT)
+logger = logging.getLogger('uploader')
+logger.setLevel('INFO')
+
 
 @contextmanager
 def temporary_dir():
@@ -67,8 +74,17 @@ class JobRunner(object):
         Invoke a full run for the specified job set
         '''
 
-        for job in self._get_jobs():
-            _run_one_job(job, self._read_pattern, self._write_pattern)
+        for i, job in enumerate(self._get_jobs()):
+            logger.info('beginning job {} of {}'.format(i, self._njobs))
+            try:
+                self._run_one_job(job, self._read_pattern, self._write_pattern)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except Exception, e:
+                logging.error(
+                    'Error encountered in job {} of {}:\nJob spec:\n{}\n'
+                        .format(i, self._njobs, job),
+                    exc_info=e)
 
     def test(self):
         '''

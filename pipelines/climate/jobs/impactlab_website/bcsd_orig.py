@@ -87,3 +87,6 @@ AGGREGATIONS = [{'agglev': 'hierid', 'aggwt': 'areawt'}]
 @pipelines.run(workers=1)
 def bcsd_orig_ir(*args, **kwargs):
     bcsd_transform(*args, **kwargs)
+
+if __name__ == '__main__':
+    bcsd_orig_ir().run()
