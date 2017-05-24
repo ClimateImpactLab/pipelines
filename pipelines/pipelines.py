@@ -137,17 +137,18 @@ class JobRunner(object):
 
         func = self._job_function_getter()
 
-        run_flags = [
-            '--job-name=edd_95_tasmax',
-            '--partition=savio2_bigmem',
-            '--account=co_laika',
-            '--qos=laika_bigmem2_normal',
-            '--nodes=1',
-            '--ntasks-per-node=20',
-            '--cpus-per-task=1',
-            '--time=72:00:00']
-
         for i, job in enumerate(self._get_jobs()):
+
+            run_flags = [
+                '--job-name={}_{}'.format(self._name, i),
+                '--output={}_{}'.format(self.name, i)
+                '--partition=savio2_bigmem',
+                '--account=co_laika',
+                '--qos=laika_bigmem2_normal',
+                '--nodes=1',
+                '--ntasks-per-node=20',
+                '--cpus-per-task=1',
+                '--time=72:00:00']
 
             metadata = self._build_metadata(job)
             
