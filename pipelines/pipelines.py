@@ -8,6 +8,7 @@ import shutil
 import os
 import tempfile
 import dill
+import json
 import inspect
 
 from contextlib import contextmanager
@@ -66,9 +67,14 @@ class JobRunner(object):
 
             yield job
 
-    def _run_one_job(self, job, read_pattern, write_pattern):
+    def _build_metadata(self, job):
         metadata = {k: v for k, v in self._metadata.items()}
         metadata.update({k: str(v) for k, v in job.items()})
+
+        return metadata
+
+    def _run_one_job(self, job, read_pattern, write_pattern):
+        metadata = self._build_metadata(job)
         self._func(read_pattern, write_pattern, metadata=metadata, **job)
 
     def run(self):
@@ -91,10 +97,18 @@ class JobRunner(object):
     def run_slurm(self):
 
         for i, job in enumerate(self._get_jobs()):
+
+            metadata = self._build_metadata(job)
+            
+            kwargs = {k: v for k, v in job.items()}
+            kwargs['read_pattern'] = self._read_pattern
+            kwargs['write_pattern'] = self._write_pattern
+            kwargs['metadata'] = metadata
+
             # logger.info('beginning job {} of {}'.format(i, self._njobs))
             print('slurm python -m pipelines.climate.toolbox {} \'{}\''.format(
-                self._func.__name__,
-                dill.dumps(job)))
+                'bcsd_transform',
+                json.dumps(kwargs)))
 
 
     def test(self):

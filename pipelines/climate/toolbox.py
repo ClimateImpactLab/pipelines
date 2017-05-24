@@ -15,6 +15,7 @@ import os
 import datafs
 import click
 import dill
+import json
 import pipelines
 
 WEIGHTS_FILE = (
@@ -483,10 +484,12 @@ def bcsd_transform(
 @click.argument('kwargs')
 def main(command, kwargs):
 
-    kwargs = dill.load(kwargs)
+    kwargs = json.loads(kwargs)
 
     if command in globals():
-        globals()['command'](**kwargs)
+        globals()[command](**kwargs)
+    else:
+        raise ValueError('command not recognized: "{}"'.format(command))
 
 if __name__ == '__main__':
     main()
