@@ -11,6 +11,7 @@ import dill
 import json
 import inspect
 
+from toolz import memoize
 from contextlib import contextmanager
 
 import logging
@@ -30,6 +31,30 @@ def temporary_dir():
 
     finally:
         shutil.rmtree(d)
+
+
+@memoize
+def create_dummy_data(tmp, variable):
+
+    tmp_path_in = os.path.join(tmp, 'sample_in.nc')
+
+    time = pd.date_range('1/1/1981', periods=4, freq='3M')
+    lats = np.arange(-89.875, 90, 0.25)
+    lons = np.arange(-179.875, 180, 0.25)
+
+    ds = xr.Dataset({
+        variable: xr.DataArray(
+            np.random.random((len(time), len(lats), len(lons))),
+            dims=('time', 'lat', 'lon'),
+            coords={
+                'time': time,
+                'lat': lats,
+                'lon': lons})
+        })
+
+    ds.to_netcdf(tmp_path_in)
+
+    return tmp_path_in
 
 
 class JobRunner(object):
@@ -123,28 +148,17 @@ class JobRunner(object):
             for i, job in enumerate(self._get_jobs()):
                 assert len(job) > 0, 'No job specification in job {}'.format(i)
 
+                # Ensure paths are specified correctly
+                # Don't check for presence, but check pattern
+                assert len(self._read_pattern.format(**job)) > 0
+                assert len(self._write_pattern.format(**job)) > 0
+
                 # ideally, test to make sure all the inputs exist on datafs
                 # check_datafs(job)
             
                 variable = job.get('variable', 'tas')
 
-                tmp_path_in = os.path.join(tmp, 'sample_in.nc')
-
-                time = pd.date_range('1/1/1981', periods=4, freq='3M')
-                lats = np.arange(-89.875, 90, 0.25)
-                lons = np.arange(-179.875, 180, 0.25)
-
-                ds = xr.Dataset({
-                    variable: xr.DataArray(
-                        np.random.random((len(time), len(lats), len(lons))),
-                        dims=('time', 'lat', 'lon'),
-                        coords={
-                            'time': time,
-                            'lat': lats,
-                            'lon': lons})
-                    })
-
-                ds.to_netcdf(tmp_path_in)
+                tmp_path_in = create_dummy_data(tmp, variable)
 
                 tmp_path_out = os.path.join(tmp, 'sample_out.nc')
 
