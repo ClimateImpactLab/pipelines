@@ -73,7 +73,7 @@ MODELS = list(map(lambda x: dict(model=x), [
     'inmcm4',
     'NorESM1-M']))
 
-AGGREGATIONS = [{'agglev': 'grid025', 'aggwt': 'popwt'}]
+AGGREGATIONS = [{'agglev': 'grid025', 'aggwt': 'unweighted'}]
 
 
 @pipelines.register('web_bcsd_climate_data_template')

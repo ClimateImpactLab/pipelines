@@ -89,8 +89,8 @@ class JobRunner(object):
 
                 tmp_path_in = os.path.join(tmp, 'sample_in.nc')
 
-                time = pd.date_range('1/1/1981', periods=12, freq='M')
-                lats = np.arange(-79.875, 90, 0.25)
+                time = pd.date_range('1/1/1981', periods=4, freq='3M')
+                lats = np.arange(-89.875, 90, 0.25)
                 lons = np.arange(-179.875, 180, 0.25)
 
                 ds = xr.Dataset({

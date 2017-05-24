@@ -457,7 +457,7 @@ def bcsd_transform(
         dim=pd.Index(years, name='year')).mean(dim='year')
     
     # Reshape to regions
-    if agglev != 'gridded':
+    if not agglev.startswith('grid'):
         ds = weighted_aggregate_grid_to_regions(
                 ds, variable, aggwt, agglev)
 
