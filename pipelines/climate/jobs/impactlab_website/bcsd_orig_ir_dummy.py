@@ -14,9 +14,12 @@ from functools import reduce
 import xarray as xr
 import pandas as pd
 
-from climate.toolbox import (
+import pipelines
+from pipelines.climate.toolbox import (
     load_climate_data,
-    weighted_aggregate_grid_to_regions)
+    weighted_aggregate_grid_to_regions,
+    bcsd_transform,
+    document)
 
 
 __author__ = 'Michael Delgado'
@@ -32,7 +35,7 @@ WRITE_PATH = os.path.join(
     '{variable}/{variable}_{model}_{period}.nc')
 
 ADDITIONAL_METADATA = dict(
-    description=__file__.__doc__,
+    description=__doc__.strip(),
     author=__author__,
     contact=__contact__,
     version=__version__,
@@ -43,6 +46,7 @@ ADDITIONAL_METADATA = dict(
     frequency='year_sample')
 
 
+@document
 def tasmin_under_32F(ds):
     '''
     Count of days with tasmin under 32F/0C
@@ -50,6 +54,7 @@ def tasmin_under_32F(ds):
     return ds.tasmin.where((ds.tasmin- 273.15) < 0).count(dim='time')
 
 
+@document
 def tasmax_over_95F(ds):
     '''
     Count of days with tasmax over 95F/35C
@@ -57,6 +62,7 @@ def tasmax_over_95F(ds):
     return ds.tasmax.where((ds.tasmax- 273.15) > 35).count(dim='time')
 
 
+@document
 def average_seasonal_temp(ds):
     '''
     Average seasonal tas
@@ -80,69 +86,14 @@ MODELS = [
     dict(model='CESM1-BGC'),
     dict(model='GFDL-ESM2M')]
 
-ITERATION_COMPONENTS = (JOBS, PERIODS, MODELS)
+AGGREGATIONS = [{'agglev': 'hierid', 'aggwt': 'areawt'}]
 
 
-def run_job(variable, transformation, rcp, pername, years, model):
-
-    # Build job metadata
-    metadata = {k: v for k, v in ADDITIONAL_METADATA.items()}
-    metadata.update(dict(
-        variable=variable, model=model, period=pername, rcp=rcp))
-
-    metadata['transformation'] = transformation.__doc__
-    metadata['time_horizon'] = '{}-{}'.format(years[0], years[-1])
-
-    # Get transformed data
-    transformed = xr.concat([
-        (load_climate_data(
-                    BCSD_orig_files.format(year=y, **metadata),
-                    variable)
-            .pipe(transformation))
-        for y in years],
-        dim=pd.Index(years, name='year')).mean(dim='year')
-    
-    # Reshape to regions
-    wtd = weighted_aggregate_grid_to_regions(
-            transformed, variable, 'areawt', 'hierid')
-
-    # Update netCDF metadata
-    wtd.attrs.update(**metadata)
-
-    # Write output
-    fp = WRITE_PATH.format(**metadata)
-    if not os.path.isdir(os.path.dirname(fp)):
-        os.makedirs(os.path.dirname(fp))
-    wtd.to_netcdf(fp)
-
-
-FORMAT = '%(asctime)-15s %(message)s'
-logging.basicConfig(format=FORMAT)
-logger = logging.getLogger('uploader')
-logger.setLevel('INFO')
-
-
-def main():
-
-    njobs = reduce(lambda x, y: x*y, map(len, ITERATION_COMPONENTS))
-
-    for i, job_components in enumerate(
-            itertools.product(*ITERATION_COMPONENTS)):
-
-        job = {}
-        for job_component in job_components:
-            job.update(job_component)
-
-        logger.info('beginning job {} of {}'.format(i, njobs))
-
-        try:
-            run_job(**job)
-        except Exception, e:
-            logger.error(
-                'Error encountered in job {} of {}:\n\nJob spec:\n{}\n\n'
-                    .format(i, njobs, job),
-                exc_info=e)
-
-
-if __name__ == '__main__':
-    main()
+@pipelines.register('bcsd_orig_ir_dummy')
+@pipelines.add_metadata(ADDITIONAL_METADATA)
+@pipelines.read_pattern(BCSD_orig_files)
+@pipelines.write_pattern(WRITE_PATH)
+@pipelines.iter(JOBS, PERIODS, MODELS, AGGREGATIONS)
+@pipelines.run(workers=1)
+def bcsd_orig_ir_dummy(*args, **kwargs):
+    bcsd_transform(*args, **kwargs)

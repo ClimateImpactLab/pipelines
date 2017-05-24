@@ -14,9 +14,11 @@ from functools import reduce
 import xarray as xr
 import pandas as pd
 
-from climate.toolbox import (
+import pipelines
+from pipelines.climate.toolbox import (
     load_climate_data,
     weighted_aggregate_grid_to_regions,
+    bcsd_transform,
     document)
 
 
@@ -33,7 +35,7 @@ WRITE_PATH = os.path.join(
     '{variable}/{variable}_{agglev}_{model}_{pername}.nc')
 
 ADDITIONAL_METADATA = dict(
-    description=__file__.__doc__,
+    description=__doc__.strip(),
     author=__author__,
     contact=__contact__,
     version=__version__,
@@ -102,72 +104,13 @@ MODELS = list(map(lambda x: dict(model=x), [
     'inmcm4',
     'NorESM1-M']))
 
-AGGREGATIONS = [{'agglev': 'grid025'}]
+AGGREGATIONS = [{'agglev': 'grid025', 'aggwt': 'unweighted'}]
 
-ITERATION_COMPONENTS = (JOBS, PERIODS, MODELS, AGGREGATIONS)
-
-
-def run_job(variable, transformation, years, **kwargs):
-
-    # Build job metadata
-    metadata = {k: v for k, v in ADDITIONAL_METADATA.items()}
-    metadata.update({
-        'variable': variable,
-        'transformation': transformation,
-        'years': '{}-{}'.format(sorted(years)[0], sorted(years)[-1])})
-
-    metadata.update(**kwargs)
-
-    # Get transformed data
-    ds = xr.concat([
-        (load_climate_data(
-            BCSD_orig_files.format(year=y, **metadata),
-                variable)
-            .pipe(transformation))
-        for y in years],
-        dim=pd.Index(years, name='year')).mean(dim='year')
-    
-    # Reshape to regions
-    # ds = weighted_aggregate_grid_to_regions(
-    #         ds, variable, aggwt, agglev)
-
-    # Update netCDF metadata
-    ds.attrs.update(**metadata)
-
-    # Write output
-    fp = WRITE_PATH.format(**metadata)
-    if not os.path.isdir(os.path.dirname(fp)):
-        os.makedirs(os.path.dirname(fp))
-    ds.to_netcdf(fp)
-
-
-FORMAT = '%(asctime)-15s %(message)s'
-logging.basicConfig(format=FORMAT)
-logger = logging.getLogger('uploader')
-logger.setLevel('INFO')
-
-
-def main(iteration_components=ITERATION_COMPONENTS):
-
-    njobs = reduce(lambda x, y: x*y, map(len, iteration_components))
-
-    for i, job_components in enumerate(
-            itertools.product(*iteration_components)):
-
-        job = {}
-        for job_component in job_components:
-            job.update(job_component)
-
-        logger.info('beginning job {} of {}'.format(i, njobs))
-
-        try:
-            run_job(**job)
-        except Exception, e:
-            logger.error(
-                'Error encountered in job {} of {}:\n\nJob spec:\n{}\n\n'
-                    .format(i, njobs, job),
-                exc_info=e)
-
-
-if __name__ == '__main__':
-    main()
+@pipelines.register('bcsd_orig_gridded_dummy')
+@pipelines.add_metadata(ADDITIONAL_METADATA)
+@pipelines.read_pattern(BCSD_orig_files)
+@pipelines.write_pattern(WRITE_PATH)
+@pipelines.iter(JOBS, PERIODS, MODELS, AGGREGATIONS)
+@pipelines.run(workers=1)
+def bcsd_orig_gridded_dummy(*args, **kwargs):
+    bcsd_transform(*args, **kwargs)

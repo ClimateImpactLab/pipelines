@@ -439,3 +439,45 @@ class _DocFunc(object):
 
 def document(func):
     return _DocFunc(func)
+
+
+def bcsd_transform(
+        read_pattern,
+        write_pattern,
+        variable,
+        transformation,
+        metadata,
+        rcp,
+        pername,
+        years,
+        model,
+        agglev,
+        aggwt):
+
+    # Add to job metadata
+    metadata.update(dict(
+        time_horizon='{}-{}'.format(years[0], years[-1])))
+
+    # Get transformed data
+    ds = xr.concat([
+        (load_climate_data(
+                    read_pattern.format(year=y, **metadata),
+                    variable)
+            .pipe(transformation))
+        for y in years],
+        dim=pd.Index(years, name='year')).mean(dim='year')
+    
+    # Reshape to regions
+    if agglev != 'gridded':
+        ds = weighted_aggregate_grid_to_regions(
+                ds, variable, aggwt, agglev)
+
+    # Update netCDF metadata
+    ds.attrs.update(**metadata)
+
+    # Write output
+    fp = write_pattern.format(**metadata)
+    if not os.path.isdir(os.path.dirname(fp)):
+        os.makedirs(os.path.dirname(fp))
+
+    ds.to_netcdf(fp)

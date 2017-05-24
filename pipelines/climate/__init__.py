@@ -1,2 +1,2 @@
 from __future__ import absolute_import
-from climate.jobs import *
+from pipelines.climate.jobs import *
