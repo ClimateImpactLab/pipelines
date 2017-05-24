@@ -32,3 +32,11 @@ def average_seasonal_temp(ds):
     Average seasonal tas
     '''
     return ds.tas.groupby('time.season').mean(dim='time')
+
+
+@pipelines.prep_func
+def average_seasonal_temp_pattern(ds):
+    '''
+    Average seasonal tas
+    '''
+    return ds.tas.mean(dim='day')

@@ -67,15 +67,15 @@ class JobRunner(object):
             name,
             func,
             iteration_components,
-            read_pattern,
+            read_patterns,
             write_pattern,
             workers=1,
             metadata={}):
 
         self._name = name
-        self._func = func
+        self._job_function_getter = func
         self._iteration_components = iteration_components
-        self._read_pattern = read_pattern
+        self._read_patterns = read_patterns
         self._write_pattern = write_pattern
         self._njobs = reduce(
             lambda x, y: x*y, map(len, self._iteration_components))
@@ -98,9 +98,14 @@ class JobRunner(object):
 
         return metadata
 
-    def _run_one_job(self, job, read_pattern, write_pattern):
-        metadata = self._build_metadata(job)
-        self._func(read_pattern, write_pattern, metadata=metadata, **job)
+    def _run_one_job(self, job):
+
+        func = self._job_function_getter()
+        try:
+            func(**job)
+        except TypeError:
+            print(job)
+            raise
 
     def run(self):
         '''
@@ -110,7 +115,16 @@ class JobRunner(object):
         for i, job in enumerate(self._get_jobs()):
             logger.info('beginning job {} of {}'.format(i, self._njobs))
             try:
-                self._run_one_job(job, self._read_pattern, self._write_pattern)
+                metadata = self._build_metadata(job)
+                    
+                kwargs = {k: v for k, v in job.items()}
+                kwargs.update(
+                    {k: v.format(**metadata) for k, v in self._read_patterns.items()})
+                kwargs['write_file'] = self._write_pattern.format(**metadata)
+                kwargs['metadata'] = metadata
+
+                self._run_one_job(kwargs)
+
             except (KeyboardInterrupt, SystemExit):
                 raise
             except Exception, e:
@@ -121,19 +135,35 @@ class JobRunner(object):
 
     def run_slurm(self):
 
+        func = self._job_function_getter()
+
+        run_flags = [
+            '--job-name=edd_95_tasmax',
+            '--partition=savio2_bigmem',
+            '--account=co_laika',
+            '--qos=laika_bigmem2_normal',
+            '--nodes=1',
+            '--ntasks-per-node=20',
+            '--cpus-per-task=1',
+            '--time=72:00:00']
+
         for i, job in enumerate(self._get_jobs()):
 
             metadata = self._build_metadata(job)
             
             kwargs = {k: v for k, v in job.items()}
-            kwargs['read_pattern'] = self._read_pattern
-            kwargs['write_pattern'] = self._write_pattern
+            kwargs.update(
+                {k: v.format(**metadata)
+                    for k, v in self._read_patterns.items()})
+            kwargs['write_file'] = self._write_pattern.format(**metadata)
             kwargs['metadata'] = metadata
 
             # logger.info('beginning job {} of {}'.format(i, self._njobs))
-            print('slurm python -m pipelines.climate.toolbox {} \'{}\''.format(
-                'bcsd_transform',
-                json.dumps(kwargs)))
+            os.system("srun {flags} run python -m {module} {func} '{job}'".format(
+                flags=' '.join(run_flags),
+                module=func.__module__,
+                func=func.__name__,
+                job=json.dumps(kwargs)))
 
 
     def test(self):
@@ -150,20 +180,24 @@ class JobRunner(object):
 
                 # Ensure paths are specified correctly
                 # Don't check for presence, but check pattern
-                assert len(self._read_pattern.format(**job)) > 0
+                for pname, patt in self._read_patterns.items():
+                    assert len(patt.format(**job)) > 0
+
                 assert len(self._write_pattern.format(**job)) > 0
 
                 # ideally, test to make sure all the inputs exist on datafs
                 # check_datafs(job)
             
                 variable = job.get('variable', 'tas')
+                kwargs = {k: v for k, v in job.items()}
 
-                tmp_path_in = create_dummy_data(tmp, variable)
-
-                tmp_path_out = os.path.join(tmp, 'sample_out.nc')
+                dummy = create_dummy_data(tmp, variable)
+                kwargs.update({k: dummy for k in self._read_patterns.keys()})
+                kwargs['write_file'] = os.path.join(tmp, 'sample_out.nc')
+                kwargs['metadata'] = self._build_metadata(job)
 
                 # Check functions with last job
-                res = self._run_one_job(job, tmp_path_in, tmp_path_out)
+                res = self._run_one_job(kwargs)
 
                 assert os.path.isfile(tmp_path_out), "No file created"
                 os.remove(tmp_path_out)
@@ -175,11 +209,11 @@ class JobRunner(object):
 class JobCreator(object):
     def __init__(self, name, func):
         self._name = name
-        self._func = func
+        self._job_function_getter = func
 
     def __call__(self, *args, **kwargs):
         kwargs.update({'name': self._name})
-        return self._func(*args, **kwargs)
+        return self._job_function_getter(*args, **kwargs)
 
 
 def register(name):
@@ -188,10 +222,15 @@ def register(name):
     return decorator
 
 
-def read_pattern(patt):
+def read_patterns(*patt, **patterns):
+    if len(patt) == 1 and 'read_pattern' not in patterns:
+        patterns['read_file'] = patt[0]
+    elif len(patt) > 1:
+        raise ValueError('more than one read pattern must use kwargs')
+
     def decorator(func):
         def inner(*args, **kwargs):
-            kwargs.update(dict(read_pattern=patt))
+            kwargs.update({'read_patterns': patterns})
             return func(*args, **kwargs)
         return inner
     return decorator

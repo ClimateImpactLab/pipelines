@@ -434,9 +434,10 @@ def weighted_aggregate_grid_to_regions(
     wtd = _aggregate_reindexed_data_to_regions(rdxd, variable, socio_variable, region_weights, region_id)
     return wtd
 
+
 def bcsd_transform(
-        read_pattern,
-        write_pattern,
+        read_file,
+        write_file,
         variable,
         transformation,
         metadata,
@@ -456,9 +457,7 @@ def bcsd_transform(
 
     # Get transformed data
     ds = xr.concat([
-        (load_climate_data(
-                    read_pattern.format(year=y, **metadata),
-                    variable)
+        (load_climate_data(read_file.format(year=y), variable)
             .pipe(transformation))
         for y in years],
         dim=pd.Index(years, name='year')).mean(dim='year')
@@ -472,11 +471,59 @@ def bcsd_transform(
     ds.attrs.update(**metadata)
 
     # Write output
-    fp = write_pattern.format(**metadata)
-    if not os.path.isdir(os.path.dirname(fp)):
-        os.makedirs(os.path.dirname(fp))
+    if not os.path.isdir(os.path.dirname(write_file)):
+        os.makedirs(os.path.dirname(write_file))
 
-    ds.to_netcdf(fp)
+    ds.to_netcdf(write_file)
+
+
+def pattern_transform(
+        pattern_file,
+        baseline_file,
+        write_file,
+        metadata,
+        variable,
+        transformation,
+        rcp,
+        pername,
+        years,
+        model,
+        baseline_model,
+        season,
+        agglev,
+        aggwt):
+
+    # Load pickled transformation
+    transformation = pipelines.load_func(transformation)
+
+    # Add to job metadata
+    metadata.update(dict(
+        time_horizon='{}-{}'.format(years[0], years[-1])))
+
+    # Get transformed data
+    ds = xr.concat([
+        (load_climate_data(pattern_file.format(year=y), variable)
+            .pipe(transformation))
+        for y in years],
+        dim=pd.Index(years, name='year')).mean(dim='year')
+
+    # load baseline
+    with xr.open_dataset(baseline_file) as base:
+        ds = (ds + base).load()
+
+    # Reshape to regions
+    if not agglev.startswith('grid'):
+        ds = weighted_aggregate_grid_to_regions(
+                ds, variable, aggwt, agglev)
+
+    # Update netCDF metadata
+    ds.attrs.update(**metadata)
+
+    # Write output
+    if not os.path.isdir(os.path.dirname(write_file)):
+        os.makedirs(os.path.dirname(write_file))
+
+    ds.to_netcdf(write_file)
 
 
 @click.command()
