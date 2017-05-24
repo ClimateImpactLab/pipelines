@@ -9,44 +9,13 @@ import pandas as pd
 import numpy as np
 import os
 
+import pipelines
+import pipelines.climate.transformations as trn
+
 from pipelines.climate.toolbox import (
     load_climate_data,
     weighted_aggregate_grid_to_regions,
-    bcsd_transform,
-    document)
-
-@document
-def example_transformation_annual_binned_tas(ds):
-    '''
-    Example computation: annual binned tas
-    
-    See also
-    --------
-    xarray.DataArray.groupby_bins
-    pandas.cut
-
-    '''
-
-    bins_tas_C = [0, 10, 14, 16, 19, 23, 31, 40]
-
-
-    return (ds
-        .groupby_bins(
-              'tas',  # name of the variable to be grouped
-              bins_tas_C,  # bin definitions
-              right=True,  # right-inclusive, i.e. (0, 10], (10, 14], ...
-              include_lowest=True  # first interval should be left-inclusive
-              )
-        .count(dim='time'))  # count number of days in each bin for the year
-
-
-@document
-def example_transformation_seasonal_average_tas(ds):
-    '''
-    Average seasonal tas
-    
-    '''
-    return ds.tas.groupby('time.season').mean(dim='time')
+    bcsd_transform)
 
 
 __author__ = 'Michael Delgado'
@@ -76,8 +45,8 @@ ADDITIONAL_METADATA = dict(
     frequency='20yr')
 
 JOBS = [
-    dict(variable='tas', transformation=example_transformation_annual_binned_tas),
-    dict(variable='tas', transformation=example_transformation_seasonal_average_tas)]
+    dict(variable='tas', transformation=trn.example_transformation_annual_binned_tas),
+    dict(variable='tas', transformation=trn.average_seasonal_temp)]
 
 PERIODS = [
     dict(rcp='historical', pername='1986', years=list(range(1986, 2006))),
@@ -109,8 +78,6 @@ MODELS = list(map(lambda x: dict(model=x), [
     'NorESM1-M']))
 
 AGGREGATIONS = [{'agglev': 'grid025', 'aggwt': 'popwt'}]
-
-ITERATION_COMPONENTS = (JOBS, PERIODS, MODELS, AGGREGATIONS)
 
 
 @pipelines.register('web_bcsd_climate_data_template')

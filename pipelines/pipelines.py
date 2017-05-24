@@ -162,3 +162,18 @@ def add_metadata(metadata):
             return func(*args, **kwargs)
         return inner
     return decorator
+
+
+class _DocFunc(object):
+    def __init__(self, func):
+        self._func = func
+
+    def __str__(self):
+        return self._func.__doc__.strip()
+
+    def __call__(self, *args, **kwargs):
+        return self._func(*args, **kwargs)
+
+
+def document(func):
+    return _DocFunc(func)

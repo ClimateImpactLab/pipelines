@@ -14,11 +14,12 @@ import xarray as xr
 import pandas as pd
 
 import pipelines
+import pipelines.climate.transformations as trn
+
 from pipelines.climate.toolbox import (
     load_climate_data,
     weighted_aggregate_grid_to_regions,
-    bcsd_transform,
-    document)
+    bcsd_transform)
 
 
 __author__ = 'Michael Delgado'
@@ -47,34 +48,10 @@ ADDITIONAL_METADATA = dict(
     weighting='areawt',
     frequency='20yr')
 
-
-@document
-def tasmin_under_32F(ds):
-    '''
-    Count of days with tasmin under 32F/0C
-    '''
-    return ds.tasmin.where((ds.tasmin- 273.15) < 0).count(dim='time')
-
-
-@document
-def tasmax_over_95F(ds):
-    '''
-    Count of days with tasmax over 95F/35C
-    '''
-    return ds.tasmax.where((ds.tasmax- 273.15) > 35).count(dim='time')
-
-
-@document
-def average_seasonal_temp(ds):
-    '''
-    Average seasonal tas
-    '''
-    return ds.tas.groupby('time.season').mean(dim='time')
-
 JOBS = [
-    # dict(variable='tasmax', transformation=tasmax_over_95F),
-    # dict(variable='tasmin', transformation=tasmin_under_32F),
-    dict(variable='tas', transformation=average_seasonal_temp)]
+    dict(variable='tasmax', transformation=trn.tasmax_over_95F),
+    dict(variable='tasmin', transformation=trn.tasmin_under_32F),
+    dict(variable='tas', transformation=trn.average_seasonal_temp)]
 
 PERIODS = [
     dict(rcp='historical', pername='1986', years=list(range(1986, 2006))),
