@@ -141,7 +141,7 @@ class JobRunner(object):
 
             run_flags = [
                 '--job-name={}_{}'.format(self._name, i),
-                '--output={}_{}'.format(self.name, i)
+                '--output={}_{}'.format(self.name, i),
                 '--partition=savio2_bigmem',
                 '--account=co_laika',
                 '--qos=laika_bigmem2_normal',
