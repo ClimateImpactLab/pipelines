@@ -79,14 +79,18 @@ class JobRunner(object):
 
                 tmp_path_in = os.path.join(tmp, 'sample_in.nc')
 
+                time = pd.date_range('1/1/1981', periods=12, freq='M')
+                lats = np.arange(-79.875, 90, 0.25)
+                lons = np.arange(-179.875, 180, 0.25)
+
                 ds = xr.Dataset({
                     variable: xr.DataArray(
-                        np.random.random((365, 37, 73)),
+                        np.random.random((len(time), len(lats), len(lons))),
                         dims=('time', 'lat', 'lon'),
                         coords={
-                            'time': pd.date_range('1/1/1981', periods=365, freq='D'),
-                            'lat': np.linspace(-90, 90, 37),
-                            'lon': np.linspace(0, 360, 73)})
+                            'time': time,
+                            'lat': lats,
+                            'lon': lons})
                     })
 
                 ds.to_netcdf(tmp_path_in)

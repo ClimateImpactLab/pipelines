@@ -45,7 +45,6 @@ ADDITIONAL_METADATA = dict(
     frequency='20yr')
 
 JOBS = [
-    dict(variable='tas', transformation=trn.example_transformation_annual_binned_tas),
     dict(variable='tas', transformation=trn.average_seasonal_temp)]
 
 PERIODS = [

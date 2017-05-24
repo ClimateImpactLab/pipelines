@@ -12,9 +12,10 @@ from six import string_types
 import itertools
 import toolz
 import os
+import datafs
 
-WEIGHTS_FILE = os.path.join(
-    '/shares/gcp/climate/_spatial_data/world-combo-new/segment_weights',
+WEIGHTS_FILE = (
+    'GCP/spatial/world-combo-new/segment_weights/' +
     'agglomerated-world-new_BCSD_grid_segment_weights_area_pop.csv')
 
 '''
@@ -230,7 +231,11 @@ def _prepare_spatial_weights_data(weights_file=WEIGHTS_FILE):
     .. note:: unnecessary if we can standardize our input
     '''
 
-    df = pd.read_csv(weights_file)
+    api = datafs.get_api()
+    archive = api.get_archive(weights_file)
+
+    with archive.open('r') as f:
+        df = pd.read_csv(f)
 
     # Re-label out-of-bounds pixel centers
     df.set_value((df['pix_cent_x'] == 180.125), 'pix_cent_x', -179.875)
@@ -424,22 +429,6 @@ def weighted_aggregate_grid_to_regions(
     rdxd = _reindex_spatial_data_to_regions(data, region_weights)
     wtd = _aggregate_reindexed_data_to_regions(rdxd, variable, socio_variable, region_weights, region_id)
     return wtd
-
-
-class _DocFunc(object):
-    def __init__(self, func):
-        self._func = func
-
-    def __str__(self):
-        return self._func.__doc__.strip()
-
-    def __call__(self, *args, **kwargs):
-        return self._func(*args, **kwargs)
-
-
-def document(func):
-    return _DocFunc(func)
-
 
 def bcsd_transform(
         read_pattern,
