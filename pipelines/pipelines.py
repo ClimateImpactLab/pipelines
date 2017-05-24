@@ -141,13 +141,12 @@ class JobRunner(object):
 
             run_flags = [
                 '--job-name={}_{}'.format(self._name, i),
-                '--output={}_{}.out'.format(self._name, i),
                 '--partition=savio2_bigmem',
                 '--account=co_laika',
                 '--qos=laika_bigmem2_normal',
                 '--nodes=1',
-                '--ntasks-per-node=20',
-                '--cpus-per-task=1',
+                '--ntasks-per-node=5',
+                '--cpus-per-task=2',
                 '--time=72:00:00']
 
             metadata = self._build_metadata(job)
@@ -160,11 +159,17 @@ class JobRunner(object):
             kwargs['metadata'] = metadata
 
             # logger.info('beginning job {} of {}'.format(i, self._njobs))
-            os.system("srun {flags} python -m {module} {func} '{job}'".format(
-                flags=' '.join(run_flags),
+            call = ("{header}\n\npython -m {module} {func} '{job}'".format(
+                header='#!/bin/bash',
                 module=func.__module__,
                 func=func.__name__,
                 job=json.dumps(kwargs)))
+
+            with open('job.sh', 'w+') as f:
+                f.write(call)
+
+            os.system('sbatch {flags} job.sh'.format(flags=' '.join(run_flags)))
+            os.remove('job.sh')
 
 
     def test(self):

@@ -476,7 +476,6 @@ def bcsd_transform(
 
     ds.to_netcdf(write_file)
 
-
 def pattern_transform(
         pattern_file,
         baseline_file,
@@ -524,6 +523,14 @@ def pattern_transform(
         os.makedirs(os.path.dirname(write_file))
 
     ds.to_netcdf(write_file)
+
+
+def prep_test_data(func_name):
+    data_generators = {
+        'bcsd_transform': test_data_bcsd_transform,
+        'pattern_transform': test_data_pattern_transform}
+
+    return data_generators.get(func_name, test_data_bcsd_transform)()
 
 
 @click.command()
