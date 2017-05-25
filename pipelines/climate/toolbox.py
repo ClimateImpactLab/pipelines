@@ -255,7 +255,7 @@ def _prepare_spatial_weights_data(weights_file=WEIGHTS_FILE):
     return df
 
 
-def _reindex_spatial_data_to_regions(da, df):
+def _reindex_spatial_data_to_regions(ds, df):
     '''
     Reindexes spatial and segment weight data to regions
 
@@ -263,8 +263,8 @@ def _reindex_spatial_data_to_regions(da, df):
 
     Parameters
     ----------
-    da: Xarray DataArray
-    df: Pandas DataFrame
+    ds: xarray Dataset
+    df: pandas DataFrame
 
     Returns
     -------
@@ -272,7 +272,7 @@ def _reindex_spatial_data_to_regions(da, df):
 
 
     '''
-    res = da.sel_points(
+    res = ds.sel_points(
         'reshape_index',
         lat=df.lat.values,
         lon=df.lon.values)
@@ -281,74 +281,57 @@ def _reindex_spatial_data_to_regions(da, df):
 
 
 def _aggregate_reindexed_data_to_regions(
-        da,
+        ds,
         variable,
-        weight_variable,
-        weights_df,
-        region_id_string,
-        backup_variable='areawt'):
+        aggwt,
+        agglev,
+        weights,
+        backup_aggwt='areawt'):
     '''
     Performs weighted avg for climate variable by region
 
     Parameters
     ----------
 
-    da: xarray.DataArray
+    ds: xarray.DataArray
 
     variable: str
         name of the data variable
 
-    weight_variable: str
+    aggwt: str
         variable to weight by (i.e popwt, areawt, cropwt)
 
-    weight_df: pd.DataFrame
-        pandas DataFrame of weights
-
-    region_id_string: str
+    agglev: str
         indicates which regional id scheme to select in the dataframe
 
-    backup_variable: str
-        if no variable is provided will default to `areawt`
+    weight: pd.DataFrame
+        pandas DataFrame of weights
+
+    backup_aggwt: str, optional
+        aggregation weight to use in regions with no aggwt data (default
+        'areawt')
 
     '''
 
-    da.coords[region_id_string] = xr.DataArray(
-                weights_df[region_id_string].values,
-                dims={'reshape_index': weights_df.index.values})
+    ds.coords[agglev] = xr.DataArray(
+                weights[agglev].values,
+                dims={'reshape_index': weights.index.values})
 
-    # get backup weights
-    da.coords[backup_variable] = xr.DataArray(
-                weights_df[backup_variable].values,
-                dims={'reshape_index': weights_df.index.values})
+    # format weights
+    ds[aggwt] = xr.DataArray(
+                weights[aggwt].values,
+                dims={'reshape_index': weights.index.values})
 
-    ds = da.to_dataset().reset_coords(backup_variable)
+    ds[aggwt].where(ds[aggwt] > 0).fillna(weights[backup_aggwt].values)
 
-    weights_backup = (
-                ds[backup_variable]
-                    .groupby(region_id_string)
-                    .sum(dim='reshape_index'))
-
-    # get preferred wieghts
-    da.coords[weight_variable] = xr.DataArray(
-                weights_df[weight_variable].values,
-                dims={'reshape_index': weights_df.index.values})
-
-    ds = da.to_dataset().reset_coords(variable)
-
-    weights_preferred = (
-                ds[weight_variable]
-                    .groupby(region_id_string)
-                    .sum(dim='reshape_index'))
-
-    weights = (
-                weights_preferred
-                    .where(weights_backup > 0)
-                    .fillna(weights_backup))
-
-    weighted = (
-                (ds[variable]*ds[weight_variable])
-                    .groupby(region_id_string)
-                    .sum(dim='reshape_index')/weights)
+    weighted = xr.Dataset({
+        variable: (
+            (ds[variable]*ds[aggwt])
+                .groupby(agglev)
+                .sum(dim='reshape_index') /
+            ds[aggwt]
+                .groupby(agglev)
+                .sum(dim='reshape_index'))})
 
     return weighted
 
@@ -394,143 +377,308 @@ def load_climate_data(fp, varname, lon_name='lon', broadcast_dims=('time',)):
 
 
 def weighted_aggregate_grid_to_regions(
-        data,
+        ds,
         variable,
-        socio_variable,
-        region_id,
-        weights_file=WEIGHTS_FILE):
+        aggwt,
+        agglev,
+        weights=None):
     '''
     Computes the weighted reshape of gridded data
 
     Parameters
     ----------
-    data: xr.DataArray
-        xarray DataArray to be aggregated. Must have 'lat' and 'lon' in the
+    ds : xr.Dataset
+        xarray Dataset to be aggregated. Must have 'lat' and 'lon' in the
         coordinates.
 
-    variable: str
+    variable : str
         name of the variable to be aggregated
 
-    socio_variable: str
+    aggwt : str
         Weighting variable (e.g. 'popwt', 'areawt'). This must be a column name
         in the weights file.
 
-    region_id: str
+    agglev : str
         Target regional aggregation level (e.g. 'ISO', 'hierid'). This must be
         a column name in the weights file.
 
-    weights_file: str, optional
-        Path to the file used for weighting (default agglomerated-world-new
-        BCSD segment weights)
+    weights : str, optional
+        Regional aggregation weights (default agglomerated-world-new BCSD
+        segment weights)
 
     Returns
     -------
     ds: xr.Dataset
-        weighted and averaged dataset based on region_id
+        weighted and averaged dataset based on agglev
     '''
 
-    region_weights = _prepare_spatial_weights_data(weights_file)
-    rdxd = _reindex_spatial_data_to_regions(data, region_weights)
-    wtd = _aggregate_reindexed_data_to_regions(rdxd, variable, socio_variable, region_weights, region_id)
-    return wtd
+    if weights is None:
+        weights = _prepare_spatial_weights_data()
 
-
-def bcsd_transform(
-        read_file,
-        write_file,
+    ds = _reindex_spatial_data_to_regions(ds, weights)
+    ds = _aggregate_reindexed_data_to_regions(
+        ds,
         variable,
-        transformation,
-        metadata,
-        rcp,
-        pername,
-        years,
-        model,
+        aggwt,
         agglev,
-        aggwt):
+        weights)
 
-    # Load pickled transformation
-    transformation = pipelines.load_func(transformation)
-
-    # Add to job metadata
-    metadata.update(dict(
-        time_horizon='{}-{}'.format(years[0], years[-1])))
-
-    # Get transformed data
-    ds = xr.concat([
-        (load_climate_data(read_file.format(year=y), variable)
-            .pipe(transformation))
-        for y in years],
-        dim=pd.Index(years, name='year')).mean(dim='year')
-    
-    # Reshape to regions
-    if not agglev.startswith('grid'):
-        ds = weighted_aggregate_grid_to_regions(
-                ds, variable, aggwt, agglev)
-
-    # Update netCDF metadata
-    ds.attrs.update(**metadata)
-
-    # Write output
-    if not os.path.isdir(os.path.dirname(write_file)):
-        os.makedirs(os.path.dirname(write_file))
-
-    ds.to_netcdf(write_file)
-
-def pattern_transform(
-        pattern_file,
-        baseline_file,
-        write_file,
-        metadata,
-        variable,
-        transformation,
-        rcp,
-        pername,
-        years,
-        model,
-        baseline_model,
-        season,
-        agglev,
-        aggwt):
-
-    # Load pickled transformation
-    transformation = pipelines.load_func(transformation)
-
-    # Add to job metadata
-    metadata.update(dict(
-        time_horizon='{}-{}'.format(years[0], years[-1])))
-
-    # Get transformed data
-    ds = xr.concat([
-        (load_climate_data(pattern_file.format(year=y), variable, broadcast_dims=('day',))
-            .pipe(transformation))
-        for y in years],
-        dim=pd.Index(years, name='year')).mean(dim='year')
-
-    # load baseline
-    with xr.open_dataset(baseline_file) as base:
-        ds = (ds + base).load()
-
-    # Reshape to regions
-    if not agglev.startswith('grid'):
-        ds = weighted_aggregate_grid_to_regions(
-                ds, variable, aggwt, agglev)
-
-    # Update netCDF metadata
-    ds.attrs.update(**metadata)
-
-    # Write output
-    if not os.path.isdir(os.path.dirname(write_file)):
-        os.makedirs(os.path.dirname(write_file))
-
-    ds.to_netcdf(write_file)
+    return ds
 
 
-def prep_test_data(func_name):
-    data_generators = {
-        'bcsd_transform': test_data_bcsd_transform,
-        'pattern_transform': test_data_pattern_transform}
+class bcsd_transform(object):
 
-    return data_generators.get(func_name, test_data_bcsd_transform)()
+    @staticmethod
+    @toolz.memoize
+    def create_dummy_data(tmp, variable, **kwargs):
+
+        tmp_path_in = os.path.join(tmp, 'sample_in.nc')
+
+        time = pd.date_range('1/1/1981', periods=4, freq='3M')
+        lats = np.arange(-89.875, 90, 0.25)
+        lons = np.arange(-179.875, 180, 0.25)
+
+        ds = xr.Dataset({
+            variable: xr.DataArray(
+                np.random.random((len(time), len(lats), len(lons))),
+                dims=('time', 'lat', 'lon'),
+                coords={
+                    'time': time,
+                    'lat': lats,
+                    'lon': lons})
+            })
+
+        ds.to_netcdf(tmp_path_in)
+
+        return {'read_file': tmp_path_in}
+
+    @staticmethod
+    @toolz.memoize
+    def create_dummy_data_small(tmp, variable, **kwargs):
+
+        tmp_path_in = os.path.join(tmp, 'sample_in_small.nc')
+
+        time = pd.date_range('1/1/1981', periods=4, freq='3M')
+        lats = np.arange(-0.875, 5, 1)
+        lons = np.arange(20.875, 25, 1)
+
+        ds = xr.Dataset({
+            variable: xr.DataArray(
+                np.random.random((len(time), len(lats), len(lons))),
+                dims=('time', 'lat', 'lon'),
+                coords={
+                    'time': time,
+                    'lat': lats,
+                    'lon': lons})
+            })
+
+        ds.to_netcdf(tmp_path_in)
+
+        return {'read_file': tmp_path_in}
+
+    @staticmethod
+    def run(
+            read_file,
+            write_file,
+            variable,
+            transformation,
+            metadata,
+            rcp,
+            pername,
+            years,
+            model,
+            agglev,
+            aggwt,
+            weights=None):
+
+        # Load pickled transformation
+        transformation = pipelines.load_func(transformation)
+
+        # Add to job metadata
+        metadata.update(dict(
+            time_horizon='{}-{}'.format(years[0], years[-1])))
+
+        # Get transformed data
+        ds = xr.Dataset({variable: xr.concat([
+            (load_climate_data(
+                    read_file.format(year=y),
+                    variable,
+                    broadcast_dims=('time',))
+                .pipe(transformation))
+            for y in years],
+            dim=pd.Index(years, name='year')).mean(dim='year')})
+        
+        # Reshape to regions
+        if not agglev.startswith('grid'):
+            ds = weighted_aggregate_grid_to_regions(
+                    ds, variable, aggwt, agglev, weights=weights)
+
+        # Update netCDF metadata
+        ds.attrs.update(**metadata)
+
+        # Write output
+        if not os.path.isdir(os.path.dirname(write_file)):
+            os.makedirs(os.path.dirname(write_file))
+
+        ds.to_netcdf(write_file)
+
+    @classmethod
+    def run_test_small(cls, *args, **kwargs):
+        weights = _prepare_spatial_weights_data()
+        with xr.open_dataset(kwargs['read_file']) as ds:
+            weights = weights.loc[
+                np.in1d(weights['lat'], ds.lat) &
+                np.in1d(weights['lon'], ds.lon)]
+
+        cls.run(*args, weights=weights, **kwargs)
+
+    @classmethod
+    def run_test(cls, *args, **kwargs):
+        cls.run(*args, **kwargs)
+
+
+class pattern_transform(object):
+
+    @staticmethod
+    @toolz.memoize
+    def create_dummy_data(tmp, variable, **kwargs):
+
+        days = np.arange(1, 30)
+        lats = np.arange(-89.875, 90, 0.25)
+        lons = np.arange(-179.875, 180, 0.25)
+
+        tmp_path_in = os.path.join(tmp, 'sample_in.nc')
+
+        ds = xr.Dataset({
+            variable: xr.DataArray(
+                np.random.random((len(days), len(lats), len(lons))),
+                dims=('day', 'lat', 'lon'),
+                coords={
+                    'day': days,
+                    'lat': lats,
+                    'lon': lons})
+            })
+
+        ds.to_netcdf(tmp_path_in)
+
+        tmp_baseline = os.path.join(tmp, 'sample_baseline.nc')
+
+        ds = xr.Dataset({
+            variable: xr.DataArray(
+                np.random.random((len(lats), len(lons))),
+                dims=('lat', 'lon'),
+                coords={
+                    'lat': lats,
+                    'lon': lons})
+            })
+
+        ds.to_netcdf(tmp_baseline)
+
+        return {'pattern_file': tmp_path_in, 'baseline_file': tmp_baseline}
+
+    @staticmethod
+    @toolz.memoize
+    def create_dummy_data_small(tmp, variable, **kwargs):
+
+        days = np.arange(1, 3)
+        lats = np.arange(-0.875, 5, 1)
+        lons = np.arange(20.875, 25, 1)
+
+        tmp_path_in = os.path.join(tmp, 'sample_in_small.nc')
+
+        ds = xr.Dataset({
+            variable: xr.DataArray(
+                np.random.random((len(days), len(lats), len(lons))),
+                dims=('day', 'lat', 'lon'),
+                coords={
+                    'day': days,
+                    'lat': lats,
+                    'lon': lons})
+            })
+
+        ds.to_netcdf(tmp_path_in)
+
+        tmp_baseline = os.path.join(tmp, 'sample_baseline_small.nc')
+
+        ds = xr.Dataset({
+            variable: xr.DataArray(
+                np.random.random((len(lats), len(lons))),
+                dims=('lat', 'lon'),
+                coords={
+                    'lat': lats,
+                    'lon': lons})
+            })
+
+        ds.to_netcdf(tmp_baseline)
+
+        return {'pattern_file': tmp_path_in, 'baseline_file': tmp_baseline}
+
+    @staticmethod
+    def run(
+            pattern_file,
+            baseline_file,
+            write_file,
+            metadata,
+            variable,
+            transformation,
+            rcp,
+            pername,
+            years,
+            model,
+            baseline_model,
+            season,
+            agglev,
+            aggwt,
+            weights=None):
+
+        # Load pickled transformation
+        transformation = pipelines.load_func(transformation)
+
+        # Add to job metadata
+        metadata.update(dict(
+            time_horizon='{}-{}'.format(years[0], years[-1])))
+
+        # Get transformed data
+        ds = xr.Dataset({variable: xr.concat([
+            (load_climate_data(
+                    pattern_file.format(year=y),
+                    variable,
+                    broadcast_dims=('day',))
+                .pipe(transformation))
+            for y in years],
+            dim=pd.Index(years, name='year')).mean(dim='year')})
+
+        # load baseline
+        with xr.open_dataset(baseline_file) as base:
+            ds = (ds + base).load()
+
+        # Reshape to regions
+        if not agglev.startswith('grid'):
+            ds = weighted_aggregate_grid_to_regions(
+                    ds, variable, aggwt, agglev, weights=weights)
+
+        # Update netCDF metadata
+        ds.attrs.update(**metadata)
+
+        # Write output
+        if not os.path.isdir(os.path.dirname(write_file)):
+            os.makedirs(os.path.dirname(write_file))
+
+        ds.to_netcdf(write_file)
+
+    @classmethod
+    def run_test_small(cls, *args, **kwargs):
+        weights = _prepare_spatial_weights_data()
+        with xr.open_dataset(kwargs['pattern_file']) as ds:
+            weights = weights.loc[
+                (np.in1d(weights['lat'].values, ds.lat) &
+                                np.in1d(weights['lon'].values, ds.lon))].copy()
+
+        cls.run(*args, weights=weights, **kwargs)
+
+    @classmethod
+    def run_test(cls, *args, **kwargs):
+        cls.run(*args, **kwargs)
 
 
 @click.command()
@@ -541,7 +689,7 @@ def main(command, kwargs):
     kwargs = json.loads(kwargs)
 
     if command in globals():
-        globals()[command](**kwargs)
+        globals()[command].run(**kwargs)
     else:
         raise ValueError('command not recognized: "{}"'.format(command))
 

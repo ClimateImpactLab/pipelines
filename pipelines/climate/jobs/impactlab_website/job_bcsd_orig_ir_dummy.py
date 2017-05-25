@@ -28,7 +28,7 @@ BCSD_orig_files = os.path.join(
 
 WRITE_PATH = os.path.join(
     '/shares/gcp/outputs/diagnostics/web/gcp/climate',
-    '{variable}/{variable}_{model}_{period}.nc')
+    '{variable}/{variable}_{model}_{pername}.nc')
 
 ADDITIONAL_METADATA = dict(
     description=__doc__.strip(),
@@ -70,6 +70,3 @@ AGGREGATIONS = [{'agglev': 'hierid', 'aggwt': 'areawt'}]
 @pipelines.run(workers=1)
 def bcsd_orig_ir_dummy(*args, **kwargs):
     return bcsd_transform
-
-if __name__ == '__main__':
-    bcsd_orig_ir_dummy().run()

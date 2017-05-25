@@ -24,8 +24,8 @@ BCSD_orig_files = os.path.join(
     '{variable}_day_BCSD_{rcp}_r1i1p1_{model}_{{year}}.nc')
 
 WRITE_PATH = os.path.join(
-    '/shares/gcp/outputs/diagnostics/web/gcp/climate/{agglev}/{scenario}',
-    '{variable}/{variable}_{model}_{period}.nc')
+    '/shares/gcp/outputs/diagnostics/web/gcp/climate/{agglev}/{rcp}',
+    '{variable}/{variable}_{model}_{pername}.nc')
 
 ADDITIONAL_METADATA = dict(
     description=__doc__.strip(),
@@ -84,6 +84,3 @@ AGGREGATIONS = [{'agglev': 'grid025', 'aggwt': 'unweighted'}]
 @pipelines.run(workers=1)
 def web_bcsd_climate_data_template(*args, **kwargs):
     return bcsd_transform
-
-if __name__ == '__main__':
-    web_bcsd_climate_data_template().run()

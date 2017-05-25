@@ -73,7 +73,7 @@ class JobRunner(object):
             metadata={}):
 
         self._name = name
-        self._job_function_getter = func
+        self._runner = func()
         self._iteration_components = iteration_components
         self._read_patterns = read_patterns
         self._write_pattern = write_pattern
@@ -98,15 +98,6 @@ class JobRunner(object):
 
         return metadata
 
-    def _run_one_job(self, job):
-
-        func = self._job_function_getter()
-        try:
-            func(**job)
-        except TypeError:
-            print(job)
-            raise
-
     def run(self):
         '''
         Invoke a full run for the specified job set
@@ -116,14 +107,14 @@ class JobRunner(object):
             logger.info('beginning job {} of {}'.format(i, self._njobs))
             try:
                 metadata = self._build_metadata(job)
-                    
+
                 kwargs = {k: v for k, v in job.items()}
                 kwargs.update(
                     {k: v.format(**metadata) for k, v in self._read_patterns.items()})
                 kwargs['write_file'] = self._write_pattern.format(**metadata)
                 kwargs['metadata'] = metadata
 
-                self._run_one_job(kwargs)
+                self._runner.run(**kwargs)
 
             except (KeyboardInterrupt, SystemExit):
                 raise
@@ -134,8 +125,6 @@ class JobRunner(object):
                     exc_info=e)
 
     def run_slurm(self):
-
-        func = self._job_function_getter()
 
         for i, job in enumerate(self._get_jobs()):
 
@@ -150,7 +139,7 @@ class JobRunner(object):
                 '--time=72:00:00']
 
             metadata = self._build_metadata(job)
-            
+
             kwargs = {k: v for k, v in job.items()}
             kwargs.update(
                 {k: v.format(**metadata)
@@ -161,8 +150,8 @@ class JobRunner(object):
             # logger.info('beginning job {} of {}'.format(i, self._njobs))
             call = ("{header}\n\npython -m {module} {func} '{job}'".format(
                 header='#!/bin/bash',
-                module=func.__module__,
-                func=func.__name__,
+                module=self._runner.__module__,
+                func=self._runner.__name__,
                 job=json.dumps(kwargs)))
 
             with open('job.sh', 'w+') as f:
@@ -179,8 +168,10 @@ class JobRunner(object):
 
         i = None
 
+        have_attempted = {}
+
         with temporary_dir() as tmp:
-        
+
             for i, job in enumerate(self._get_jobs()):
                 assert len(job) > 0, 'No job specification in job {}'.format(i)
 
@@ -191,22 +182,38 @@ class JobRunner(object):
 
                 assert len(self._write_pattern.format(**job)) > 0
 
+                test_this_job = False
+
+                for k, v in job.items():
+                    if not k in have_attempted:
+                        have_attempted[k] = []
+
+                    if not v in have_attempted[k]:
+                        test_this_job = True
+                        have_attempted[k].append(v)
+
+                if not test_this_job:
+                    continue
+
                 # ideally, test to make sure all the inputs exist on datafs
                 # check_datafs(job)
-            
-                variable = job.get('variable', 'tas')
+
                 kwargs = {k: v for k, v in job.items()}
 
-                dummy = create_dummy_data(tmp, variable)
-                kwargs.update({k: dummy for k in self._read_patterns.keys()})
                 kwargs['write_file'] = os.path.join(tmp, 'sample_out.nc')
                 kwargs['metadata'] = self._build_metadata(job)
 
-                # Check functions with last job
-                res = self._run_one_job(kwargs)
+                if i > 0:
+                    dummy = self._runner.create_dummy_data_small(tmp, job['variable'])
+                    kwargs.update(dummy)
+                    res = self._runner.run_test_small(**kwargs)
+                else:
+                    dummy = self._runner.create_dummy_data(tmp, job['variable'])
+                    kwargs.update(dummy)
+                    res = self._runner.run_test(**kwargs)
 
-                assert os.path.isfile(tmp_path_out), "No file created"
-                os.remove(tmp_path_out)
+                assert os.path.isfile(kwargs['write_file']), "No file created"
+                os.remove(kwargs['write_file'])
 
         if i is None:
             raise ValueError('No jobs specified')
@@ -286,7 +293,7 @@ def prep_func(func):
         os.makedirs('pipes')
 
     fp = 'pipes/{}'.format(funcname)
-    
+
     with open(fp, 'wb+') as f:
         pickled = dill.dump(func, f)
 

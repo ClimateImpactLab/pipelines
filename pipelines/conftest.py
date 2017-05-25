@@ -2,7 +2,6 @@
 import pytest
 import inspect
 import pipelines
-import pkgutil
 import os
 
 try:
@@ -10,7 +9,6 @@ try:
 except ImportError:
     from imp import load_module as import_module
 
-# things = []
 
 def check_module(path):
     if not str(path).endswith('.py'):
@@ -42,34 +40,9 @@ class PipelineModule(pytest.Module):
         mod = import_module(modpath)
 
         for name, obj in inspect.getmembers(mod):
-            
-            if ('pipelines.py' in self.name) or ('toolbox.py' in self.name):
-                break
 
-            # if (name != self.name) and inspect.ismodule(obj) and check_module(name):
-
-            #     yield PipelineModule(name, self)
-
-            # if type(obj) != type(pipelines.JobCreator):
-            #     continue
-
-            try:
-                # things.append(obj)
-                item = obj()
-                
-                # if isinstance(obj, pipelines.JobRunner):
-                    # things.append(obj)
-                yield BCSDItem(name, self, item)
-
-            # except IOError:
-                # things.append(item)
-                # raise ValueError(things)
-
-            except (TypeError, AttributeError):
-                pass
-                # raise ValueError(self.name, obj, type(obj), obj.__class__)
-                
-        # raise ValueError(things)
+            if isinstance(obj, pipelines.JobCreator):
+                yield BCSDItem(name, self, obj())
 
 
 class BCSDItem(pytest.Item):

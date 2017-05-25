@@ -85,6 +85,3 @@ AGGREGATIONS = [{'agglev': 'grid025', 'aggwt': 'unweighted'}]
 @pipelines.run(workers=1)
 def bcsd_orig_gridded_dummy(*args, **kwargs):
     return bcsd_transform
-
-if __name__ == '__main__':
-    bcsd_orig_gridded_dummy().run()

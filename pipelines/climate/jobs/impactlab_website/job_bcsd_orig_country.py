@@ -87,6 +87,3 @@ AGGREGATIONS = [{'agglev': 'ISO', 'aggwt': 'areawt'}]
 @pipelines.run(workers=1)
 def bcsd_orig_country(*args, **kwargs):
     return bcsd_transform
-
-if __name__ == '__main__':
-    bcsd_orig_country().run()

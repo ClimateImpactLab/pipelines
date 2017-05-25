@@ -1,0 +1,45 @@
+language: python
+
+python:
+  - 2.7
+
+env:
+  matrix:
+    - DATAFS_TEST_ENV=xarray
+
+install:
+  - pip install --upgrade pip
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+        wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+      else
+        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+      fi;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda config --add channels conda-forge
+  - conda info -a
+
+  - conda create -q -n datafs python=$TRAVIS_PYTHON_VERSION
+  - source activate datafs
+  - conda install --yes --file ci/requirements_conda.txt
+  - python -m pip install -r ci/requirements.txt
+
+script:
+  - export PATH=$HOME/miniconda/bin:$PATH
+  - export PATH=$HOME/miniconda2/bin:$PATH
+  - export PATH=$HOME/miniconda3/bin:$PATH
+  - source activate datafs
+  - python -m pytest
+  - sphinx-build -W -b html -d docs/_build/doctrees docs/. docs/_build/html
+
+notifications:
+  email:
+    on_success: never
+    on_failure: never
+
+after_success:
+  - coverage combine
+  - coveralls
