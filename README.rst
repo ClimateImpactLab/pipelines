@@ -31,25 +31,25 @@ Features
 Usage
 -----
 
-  1.  Create a new branch for your request (``git branch my-new-run``)
+1.  Create a new branch for your request (``git branch my-new-run``)
 
-  2.  In the relevant sector's submodule (e.g. ``pipelines/climate``), look for a template job, e.g. ``/pipelines/climate/jobs/job_bcsd_template.py``
+2.  In the relevant sector's submodule (e.g. ``pipelines/climate``), look for a template job, e.g. ``/pipelines/climate/jobs/job_bcsd_template.py``
 
-  2.  Copy this template to a directory for your project (e.g. ``gcp-labor`` or ``impactlab_website``)
+2.  Copy this template to a directory for your project (e.g. ``gcp-labor`` or ``impactlab_website``)
 
-  3.  Make sure this folder has an ``__init__.py`` file in it. It can be blank.
+3.  Make sure this folder has an ``__init__.py`` file in it. It can be blank.
 
-  4.  Modify the template to your needs. If you need a new transformation, create one in ``transformations.py``
+4.  Modify the template to your needs. If you need a new transformation, create one in ``transformations.py``
 
-  5.  Initialize your pipelines by importing your file, e.g.: 
+5.  Initialize your pipelines by importing your file, e.g.: 
 
-      .. code-block:: python
-    
-          python -m pipelines.climate.jobs.impactlab_website.my_new_job
+    .. code-block:: python
+  
+        python -m pipelines.climate.jobs.impactlab_website.my_new_job
 
-  6.  Run tests: ``pytest``
+6.  Run tests: ``pytest``
 
-  7.  Push your changes to github and file a pull request
+7.  Push your changes to github and file a pull request
 
 
 Requirements
