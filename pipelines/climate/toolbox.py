@@ -524,7 +524,7 @@ class bcsd_transform(object):
 
     @classmethod
     def run_test_small(cls, *args, **kwargs):
-        weights = _prepare_spatial_weights_data()
+        weights = pd.read_pickle('pipelines/climate/test/data/weightsfile.pkl')
         with xr.open_dataset(kwargs['read_file']) as ds:
             weights = weights.loc[
                 np.in1d(weights['lat'], ds.lat) &
@@ -534,7 +534,8 @@ class bcsd_transform(object):
 
     @classmethod
     def run_test(cls, *args, **kwargs):
-        cls.run(*args, **kwargs)
+        weights = pd.read_pickle('pipelines/climate/test/data/weightsfile.pkl')
+        cls.run(*args, weights=weights, **kwargs)
 
 
 class pattern_transform(object):
@@ -668,7 +669,7 @@ class pattern_transform(object):
 
     @classmethod
     def run_test_small(cls, *args, **kwargs):
-        weights = _prepare_spatial_weights_data()
+        weights = pd.read_pickle('pipelines/climate/test/data/weightsfile.pkl')
         with xr.open_dataset(kwargs['pattern_file']) as ds:
             weights = weights.loc[
                 (np.in1d(weights['lat'].values, ds.lat) &
@@ -678,7 +679,8 @@ class pattern_transform(object):
 
     @classmethod
     def run_test(cls, *args, **kwargs):
-        cls.run(*args, **kwargs)
+        weights = pd.read_pickle('pipelines/climate/test/data/weightsfile.pkl')
+        cls.run(*args, weights=weights, **kwargs)
 
 
 @click.command()
