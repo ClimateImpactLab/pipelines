@@ -2,9 +2,6 @@
 Climate Impact Lab Data Pipelines
 =========================================
 
-.. image:: https://img.shields.io/pypi/v/pipelines.svg
-        :target: https://pypi.python.org/pypi/pipelines
-
 .. image:: https://travis-ci.org/ClimateImpactLab/pipelines.svg?branch=master
         :target: https://travis-ci.org/ClimateImpactLab/pipelines?branch=master
 
