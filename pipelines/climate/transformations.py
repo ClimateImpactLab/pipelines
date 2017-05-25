@@ -35,6 +35,17 @@ def average_seasonal_temp(ds):
 
 
 @pipelines.prep_func
+def tasmax_over_27C(ds):
+    '''
+    Count of days with tasmax gte 27C
+    '''
+
+    ds['gte_27'] = ds.tasmax.where((ds.tasmax -273.15) >= 27.).count(dim='time')
+    ds['gt_0_lte_27'] = ds.tasmax.where(0 < ds.tasmax - 273.15 < 27).count(dim='time')
+
+    return ds
+
+@pipelines.prep_func
 def average_seasonal_temp_pattern(ds):
     '''
     Average seasonal tas

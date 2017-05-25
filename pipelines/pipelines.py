@@ -135,6 +135,7 @@ class JobRunner(object):
                 '--qos=laika_bigmem2_normal',
                 '--nodes=1',
                 '--ntasks-per-node=5',
+                '--mem-per-cpu=8000',
                 '--cpus-per-task=2',
                 '--time=72:00:00']
 
