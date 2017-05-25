@@ -11,6 +11,7 @@ import dill
 import json
 import inspect
 
+from toolz import memoize
 from contextlib import contextmanager
 
 import logging
@@ -32,6 +33,30 @@ def temporary_dir():
         shutil.rmtree(d)
 
 
+@memoize
+def create_dummy_data(tmp, variable):
+
+    tmp_path_in = os.path.join(tmp, 'sample_in.nc')
+
+    time = pd.date_range('1/1/1981', periods=4, freq='3M')
+    lats = np.arange(-89.875, 90, 0.25)
+    lons = np.arange(-179.875, 180, 0.25)
+
+    ds = xr.Dataset({
+        variable: xr.DataArray(
+            np.random.random((len(time), len(lats), len(lons))),
+            dims=('time', 'lat', 'lon'),
+            coords={
+                'time': time,
+                'lat': lats,
+                'lon': lons})
+        })
+
+    ds.to_netcdf(tmp_path_in)
+
+    return tmp_path_in
+
+
 class JobRunner(object):
     '''
     Generalized job dispatch class
@@ -42,15 +67,15 @@ class JobRunner(object):
             name,
             func,
             iteration_components,
-            read_pattern,
+            read_patterns,
             write_pattern,
             workers=1,
             metadata={}):
 
         self._name = name
-        self._func = func
+        self._job_function_getter = func
         self._iteration_components = iteration_components
-        self._read_pattern = read_pattern
+        self._read_patterns = read_patterns
         self._write_pattern = write_pattern
         self._njobs = reduce(
             lambda x, y: x*y, map(len, self._iteration_components))
@@ -73,9 +98,14 @@ class JobRunner(object):
 
         return metadata
 
-    def _run_one_job(self, job, read_pattern, write_pattern):
-        metadata = self._build_metadata(job)
-        self._func(read_pattern, write_pattern, metadata=metadata, **job)
+    def _run_one_job(self, job):
+
+        func = self._job_function_getter()
+        try:
+            func(**job)
+        except TypeError:
+            print(job)
+            raise
 
     def run(self):
         '''
@@ -85,7 +115,16 @@ class JobRunner(object):
         for i, job in enumerate(self._get_jobs()):
             logger.info('beginning job {} of {}'.format(i, self._njobs))
             try:
-                self._run_one_job(job, self._read_pattern, self._write_pattern)
+                metadata = self._build_metadata(job)
+                    
+                kwargs = {k: v for k, v in job.items()}
+                kwargs.update(
+                    {k: v.format(**metadata) for k, v in self._read_patterns.items()})
+                kwargs['write_file'] = self._write_pattern.format(**metadata)
+                kwargs['metadata'] = metadata
+
+                self._run_one_job(kwargs)
+
             except (KeyboardInterrupt, SystemExit):
                 raise
             except Exception, e:
@@ -96,19 +135,42 @@ class JobRunner(object):
 
     def run_slurm(self):
 
+        func = self._job_function_getter()
+
         for i, job in enumerate(self._get_jobs()):
+
+            run_flags = [
+                '--job-name={}_{}'.format(self._name, i),
+                '--partition=savio2_bigmem',
+                '--account=co_laika',
+                '--qos=laika_bigmem2_normal',
+                '--nodes=1',
+                '--ntasks-per-node=5',
+                '--mem-per-cpu=8000',
+                '--cpus-per-task=2',
+                '--time=72:00:00']
 
             metadata = self._build_metadata(job)
             
             kwargs = {k: v for k, v in job.items()}
-            kwargs['read_pattern'] = self._read_pattern
-            kwargs['write_pattern'] = self._write_pattern
+            kwargs.update(
+                {k: v.format(**metadata)
+                    for k, v in self._read_patterns.items()})
+            kwargs['write_file'] = self._write_pattern.format(**metadata)
             kwargs['metadata'] = metadata
 
             # logger.info('beginning job {} of {}'.format(i, self._njobs))
-            print('slurm python -m pipelines.climate.toolbox {} \'{}\''.format(
-                'bcsd_transform',
-                json.dumps(kwargs)))
+            call = ("{header}\n\npython -m {module} {func} '{job}'".format(
+                header='#!/bin/bash',
+                module=func.__module__,
+                func=func.__name__,
+                job=json.dumps(kwargs)))
+
+            with open('job.sh', 'w+') as f:
+                f.write(call)
+
+            os.system('sbatch {flags} job.sh'.format(flags=' '.join(run_flags)))
+            os.remove('job.sh')
 
 
     def test(self):
@@ -123,33 +185,26 @@ class JobRunner(object):
             for i, job in enumerate(self._get_jobs()):
                 assert len(job) > 0, 'No job specification in job {}'.format(i)
 
+                # Ensure paths are specified correctly
+                # Don't check for presence, but check pattern
+                for pname, patt in self._read_patterns.items():
+                    assert len(patt.format(**job)) > 0
+
+                assert len(self._write_pattern.format(**job)) > 0
+
                 # ideally, test to make sure all the inputs exist on datafs
                 # check_datafs(job)
             
                 variable = job.get('variable', 'tas')
+                kwargs = {k: v for k, v in job.items()}
 
-                tmp_path_in = os.path.join(tmp, 'sample_in.nc')
-
-                time = pd.date_range('1/1/1981', periods=4, freq='3M')
-                lats = np.arange(-89.875, 90, 0.25)
-                lons = np.arange(-179.875, 180, 0.25)
-
-                ds = xr.Dataset({
-                    variable: xr.DataArray(
-                        np.random.random((len(time), len(lats), len(lons))),
-                        dims=('time', 'lat', 'lon'),
-                        coords={
-                            'time': time,
-                            'lat': lats,
-                            'lon': lons})
-                    })
-
-                ds.to_netcdf(tmp_path_in)
-
-                tmp_path_out = os.path.join(tmp, 'sample_out.nc')
+                dummy = create_dummy_data(tmp, variable)
+                kwargs.update({k: dummy for k in self._read_patterns.keys()})
+                kwargs['write_file'] = os.path.join(tmp, 'sample_out.nc')
+                kwargs['metadata'] = self._build_metadata(job)
 
                 # Check functions with last job
-                res = self._run_one_job(job, tmp_path_in, tmp_path_out)
+                res = self._run_one_job(kwargs)
 
                 assert os.path.isfile(tmp_path_out), "No file created"
                 os.remove(tmp_path_out)
@@ -161,11 +216,11 @@ class JobRunner(object):
 class JobCreator(object):
     def __init__(self, name, func):
         self._name = name
-        self._func = func
+        self._job_function_getter = func
 
     def __call__(self, *args, **kwargs):
         kwargs.update({'name': self._name})
-        return self._func(*args, **kwargs)
+        return self._job_function_getter(*args, **kwargs)
 
 
 def register(name):
@@ -174,10 +229,15 @@ def register(name):
     return decorator
 
 
-def read_pattern(patt):
+def read_patterns(*patt, **patterns):
+    if len(patt) == 1 and 'read_pattern' not in patterns:
+        patterns['read_file'] = patt[0]
+    elif len(patt) > 1:
+        raise ValueError('more than one read pattern must use kwargs')
+
     def decorator(func):
         def inner(*args, **kwargs):
-            kwargs.update(dict(read_pattern=patt))
+            kwargs.update({'read_patterns': patterns})
             return func(*args, **kwargs)
         return inner
     return decorator

@@ -22,9 +22,9 @@ __author__ = 'Michael Delgado'
 __contact__ = 'mdelgado@rhg.com'
 __version__ = '0.0.1a1'
 
-BCSD_orig_files = os.path.join(
-    '/shares/gcp/sources/BCSD-original/{rcp}/day/atmos/{variable}/r1i1p1/v1.0',
-    '{variable}_day_BCSD_{rcp}_r1i1p1_{model}_{year}.nc')
+BCSD_orig_files = (
+    '/shares/gcp/sources/BCSD-original/{rcp}/day/atmos/{variable}/r1i1p1/' +
+    'v1.0/{variable}_day_BCSD_{rcp}_r1i1p1_{model}_{{year}}.nc')
 
 WRITE_PATH = os.path.join(
     '/shares/gcp/outputs/diagnostics/web/gcp/climate',
@@ -79,12 +79,12 @@ AGGREGATIONS = [{'agglev': 'grid025', 'aggwt': 'unweighted'}]
 
 @pipelines.register('bcsd_orig_gridded_dummy')
 @pipelines.add_metadata(ADDITIONAL_METADATA)
-@pipelines.read_pattern(BCSD_orig_files)
+@pipelines.read_patterns(BCSD_orig_files)
 @pipelines.write_pattern(WRITE_PATH)
 @pipelines.iterate(JOBS, PERIODS, MODELS, AGGREGATIONS)
 @pipelines.run(workers=1)
 def bcsd_orig_gridded_dummy(*args, **kwargs):
-    bcsd_transform(*args, **kwargs)
+    return bcsd_transform
 
 if __name__ == '__main__':
     bcsd_orig_gridded_dummy().run()
