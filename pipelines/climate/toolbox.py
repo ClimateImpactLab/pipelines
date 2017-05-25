@@ -639,14 +639,21 @@ class pattern_transform(object):
             time_horizon='{}-{}'.format(years[0], years[-1])))
 
         # Get transformed data
-        ds = xr.Dataset({variable: xr.concat([
-            (load_climate_data(
-                    pattern_file.format(year=y),
-                    variable,
-                    broadcast_dims=('day',))
-                .pipe(transformation))
-            for y in years],
-            dim=pd.Index(years, name='year')).mean(dim='year')})
+        result = None
+
+        for y in years:
+            annual = (load_climate_data(
+                                pattern_file.format(year=y),
+                                variable,
+                                broadcast_dims=('day',))
+                            .pipe(transformation))
+            
+            if result is None:
+                result = annual
+            else:
+                result += annual
+
+        ds = xr.Dataset({variable: result/len(years)})
 
         # load baseline
         with xr.open_dataset(baseline_file) as base:

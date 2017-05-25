@@ -20,17 +20,17 @@ __contact__ = 'jsimcock@rhg.com'
 __version__ = '0.1.0'
 
 BASELINE_FILE = (
-    '/global/scratch/jiacany/nasa_bcsd/pattern/baseline/' +
-    '{baseline_model}/{variable}/' +
+    'shares/gcp/outputs/temps/web/gcp/climate/SMME_baselines/' +
+    '{baseline_model}/' +
     '{variable}_baseline_1986-2005_r1i1p1_{baseline_model}_{season}.nc')
 
 BCSD_pattern_files = (
-    '/global/scratch/jiacany/nasa_bcsd/pattern/SMME_surrogate/' +
+    '/shares/gcp/climate/BCSD/SMME/' +
     '{rcp}/{variable}/{model}/' +
     '{variable}_BCSD_{model}_{rcp}_r1i1p1_{season}_{{year}}.nc')
 
 WRITE_PATH = (
-    '/global/scratch/mdeglado/web/gcp/climate/{rcp}/{agglev}/{variable}/' +
+    '/shares/gcp/outputs/temps/web/gcp/climate/{rcp}/{agglev}/{variable}/' +
     '{variable}_{agglev}_{aggwt}_{model}_{season}_{pername}.nc')
 
 ADDITIONAL_METADATA = dict(
@@ -39,8 +39,8 @@ ADDITIONAL_METADATA = dict(
     contact=__contact__,
     version=__version__,
     repo='https://github.com/ClimateImpactLab/pipelines',
-    file='/pipelines/climate/jobs/impactlab_website/job_pattern_bcsd_ir_slurm.py',
-    execute='job_pattern_bcsd_ir_slurm.job_pattern_bcsd_ir_slurm.run_slurm()',
+    file='/pipelines/climate/jobs/impactlab_website/job_pattern_bcsd_ir__iso_sacagawea.py',
+    execute='job_pattern_bcsd_ir__iso_sacagawea.job_pattern_bcsd_ir__iso_sacagawea.run()',
     project='gcp', 
     team='climate',
     geography='hierid',
@@ -71,6 +71,8 @@ MODELS = list(map(lambda x: dict(model=x[0], baseline_model=x[1]), [
         ('pattern32','GFDL-CM3'), 
         ('pattern33','CanESM2')]))
 
+
+models = ['MRI-CGCM3', 'GFDL-ESM2G', 'GFDL-CM3', 'CanESM2']
 #SEASONS = list(map(lambda x: dict(season=x),[ 'DJF']))
 SEASONS = list(map(lambda x: dict(season=x),[ 'DJF', 'MAM', 'JJA', 'SON']))
 
@@ -79,7 +81,7 @@ AGGREGATIONS = [
     {'agglev': 'hierid', 'aggwt': 'areawt'}]
 
 
-@pipelines.register('job_pattern_bcsd_ir_sacag')
+@pipelines.register('job_pattern_bcsd_ir__iso_sacagawea')
 @pipelines.add_metadata(ADDITIONAL_METADATA)
 @pipelines.read_patterns(
     pattern_file=BCSD_pattern_files,
@@ -87,5 +89,5 @@ AGGREGATIONS = [
 @pipelines.write_pattern(WRITE_PATH)
 @pipelines.iterate(JOBS, PERIODS, MODELS, SEASONS, AGGREGATIONS)
 @pipelines.run(workers=1)
-def job_pattern_bcsd_ir_slurm():
+def job_pattern_bcsd_ir__iso_sacagawea():
     return pattern_transform
