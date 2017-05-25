@@ -43,3 +43,6 @@ notifications:
 after_success:
   - coverage combine
   - coveralls
+
+dist: trusty
+sudo: false
