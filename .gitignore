@@ -1,3 +1,7 @@
+
+# pickled pipeline segments
+pipes
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -69,3 +73,6 @@ target/
 #.IPython
 *.ipynb
 *.ipynb_checkpoints
+
+
+nohup.out
