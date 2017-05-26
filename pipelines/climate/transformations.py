@@ -37,7 +37,9 @@ def average_seasonal_temp(ds):
 @pipelines.prep_func
 def tasmax_over_27C_pow1(ds):
     '''
-    Sum of days with tasmax gte 27C
+    Sum of days with tasmax gt 27C
+    Sum of tasmax for days with tasmax between 0C and 27C
+
     '''
 
     ds['gt_27'] = ds.tasmax.where((ds.tasmax -273.15) > 27.).sum(dim='time')
@@ -48,7 +50,9 @@ def tasmax_over_27C_pow1(ds):
 @pipelines.prep_func
 def tasmax_over_27C_pow2(ds):
     '''
-    Sum of tasmax**2 for days with tasmax gte 27C
+    Sum of tasmax**2 for days with tasmax gt 27C
+    Sum of tasmax**2 for days with tasmax between 0C and 27C
+
     '''
 
     ds['gt_27'] = (ds.tasmax.where((ds.tasmax -273.15) > 27.)**2).sum(dim='time')
@@ -59,7 +63,8 @@ def tasmax_over_27C_pow2(ds):
 @pipelines.prep_func
 def tasmax_over_27C_pow3(ds):
     '''
-    Sum of tasmax**3 for days with tasmax gte 27C
+    Sum of tasmax**3 for days with tasmax gt 27C
+    Sum of tasmax**3 for days with tasmax between 0C and 27C
     '''
 
     ds['gt_27'] = (ds.tasmax.where((ds.tasmax -273.15) > 27.)**3).sum(dim='time')
@@ -70,7 +75,8 @@ def tasmax_over_27C_pow3(ds):
 @pipelines.prep_func
 def tasmax_over_27C_pow4(ds):
     '''
-    Sum of tasmax**4 for days with tasmax gte 27C
+    Sum of tasmax**4 for days with tasmax gt 27C
+    Sum of tasmax**4 for days with tasmax between 0C and 27C
 
     ''' 
 
