@@ -42,8 +42,8 @@ def tasmax_over_27C_pow1(ds):
 
     '''
 
-    ds['gt_27'] = ds.tasmax.where((ds.tasmax -273.15) > 27.).sum(dim='time')
-    ds['gt_0_lt_27'] = ds.tasmax.where((0 < (ds.tasmax - 273.15)) & ((ds.tasmax - 273.15) < 27)).sum(dim='time')
+    ds['gt_27'] = (ds.tasmax - 273.15).where((ds.tasmax -273.15) > 27.).sum(dim='time')
+    ds['gt_0_lt_27'] = (ds.tasmax - 273.15).where((0 < (ds.tasmax - 273.15)) & ((ds.tasmax - 273.15) < 27)).sum(dim='time')
 
     return ds
 
@@ -55,8 +55,8 @@ def tasmax_over_27C_pow2(ds):
 
     '''
 
-    ds['gt_27'] = (ds.tasmax.where((ds.tasmax -273.15) > 27.)**2).sum(dim='time')
-    ds['gt_0_lt_27'] = (ds.tasmax.where((0 < (ds.tasmax - 273.15)) & ((ds.tasmax - 273.15) < 27))**2).sum(dim='time')
+    ds['gt_27'] = (((ds.tasmax - 273.15).where((ds.tasmax -273.15) > 27.))**2).sum(dim='time')
+    ds['gt_0_lt_27'] = (((ds.tasmax - 273.15).where((0 < (ds.tasmax - 273.15)) & ((ds.tasmax - 273.15) < 27)))**2).sum(dim='time')
 
     return ds
 
@@ -67,8 +67,8 @@ def tasmax_over_27C_pow3(ds):
     Sum of tasmax**3 for days with tasmax between 0C and 27C
     '''
 
-    ds['gt_27'] = (ds.tasmax.where((ds.tasmax -273.15) > 27.)**3).sum(dim='time')
-    ds['gt_0_lt_27'] = (ds.tasmax.where((0 < (ds.tasmax - 273.15)) & ((ds.tasmax - 273.15) < 27))**3).sum(dim='time')
+    ds['gt_27'] = (((ds.tasmax - 273.15).where((ds.tasmax -273.15) > 27.))**3).sum(dim='time')
+    ds['gt_0_lt_27'] = (((ds.tasmax - 273.15).where((0 < (ds.tasmax - 273.15)) & ((ds.tasmax - 273.15) < 27)))**3).sum(dim='time')
 
     return ds
 
@@ -79,9 +79,8 @@ def tasmax_over_27C_pow4(ds):
     Sum of tasmax**4 for days with tasmax between 0C and 27C
 
     ''' 
-
-    ds['gt_27'] = (ds.tasmax.where((ds.tasmax -273.15) > 27.)**4).sum(dim='time')
-    ds['gt_0_lt_27'] = (ds.tasmax.where((0 < (ds.tasmax - 273.15)) & ((ds.tasmax - 273.15) < 27))**4).sum(dim='time')
+    ds['gt_27'] = (((ds.tasmax - 273.15).where((ds.tasmax -273.15) > 27.))**4).sum(dim='time')
+    ds['gt_0_lt_27'] = (((ds.tasmax - 273.15).where((0 < (ds.tasmax - 273.15)) & ((ds.tasmax - 273.15) < 27)))**4).sum(dim='time')
 
     return ds
 
