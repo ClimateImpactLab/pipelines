@@ -538,6 +538,52 @@ class bcsd_transform(object):
         cls.run(*args, weights=weights, **kwargs)
 
 
+class bcsd_transform_annual(bcsd_transform):
+
+    @staticmethod
+    def run(
+            read_file,
+            write_file,
+            variable,
+            transformation,
+            transformation_name,
+            metadata,
+            rcp,
+            pername,
+            year,
+            model,
+            agglev,
+            aggwt,
+            weights=None):
+
+                # Load pickled transformation
+        transformation = pipelines.load_func(transformation)
+
+        # Get transformed data
+        ds = xr.Dataset(load_climate_data(
+                    read_file,
+                    variable,
+                    broadcast_dims=('time',))
+                .pipe(transformation))
+    
+    # Reshape to regions
+        if not agglev.startswith('grid'):
+            ds = weighted_aggregate_grid_to_regions(
+                    ds, variable, aggwt, agglev, weights=weights)
+
+        # Update netCDF metadata
+        ds.attrs.update(**metadata)
+
+        # Write output
+        if not os.path.isdir(os.path.dirname(write_file)):
+            os.makedirs(os.path.dirname(write_file))
+
+        ds.to_netcdf(write_file)
+
+
+
+
+
 class pattern_transform(object):
 
     @staticmethod

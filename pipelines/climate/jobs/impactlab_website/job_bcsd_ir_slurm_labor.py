@@ -12,7 +12,7 @@ import pipelines.climate.transformations as trn
 from pipelines.climate.toolbox import (
     load_climate_data,
     weighted_aggregate_grid_to_regions,
-    bcsd_transform)
+    bcsd_transform_annual)
 
 
 __author__ = 'Justin Gerard'
@@ -51,9 +51,9 @@ JOBS = [
 
     ]
 
-PERIODS = [
-    dict(rcp='rcp45', pername='annual', years=list(range(2006, 2101))),
-    dict(rcp='rcp85', pername='annual', years=list(range(2006, 2101)))]
+PERIODS = ([
+    dict(rcp=rcp, pername='annual', year=year)
+        for year in range(1981, 2100) for rcp in ['rcp85']])
 
 MODELS = list(map(lambda x: dict(model=x), [
     'ACCESS1-0',
@@ -78,7 +78,7 @@ MODELS = list(map(lambda x: dict(model=x), [
     'inmcm4',
     'NorESM1-M']))
 
-AGGREGATIONS = [{'agglev': 'hierid', 'aggwt': 'areawt'}]
+AGGREGATIONS = [{'agglev': 'hierid', 'aggwt': 'popwt'}]
 
 
 @pipelines.register('job_bcsd_ir_slurm_labor')
@@ -88,4 +88,4 @@ AGGREGATIONS = [{'agglev': 'hierid', 'aggwt': 'areawt'}]
 @pipelines.iterate(JOBS, PERIODS, MODELS, AGGREGATIONS)
 @pipelines.run(workers=1)
 def job_bcsd_ir_slurm_labor(*args, **kwargs):
-    return bcsd_transform
+    return bcsd_transform_annual
