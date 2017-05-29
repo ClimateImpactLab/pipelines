@@ -561,8 +561,9 @@ class bcsd_transform_annual(bcsd_transform):
         #print(metadata)
         for y in years:
             print(read_file.format(year=y))
-            wf = write_file.format(year=y)
+            wf = str(write_file.format(year=y))
             print(wf)
+
 
                 # Load pickled transformation
             transformation = pipelines.load_func(transformation)
