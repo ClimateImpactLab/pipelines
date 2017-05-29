@@ -27,7 +27,7 @@ BCSD_orig_files  = (
 WRITE_PATH = os.path.join(
     '/global/scratch/jsimcock/gcp/climate/{agglev}/{rcp}',
     '{variable}/{transformation_name}/',
-    '{variable}_{transformation_name}_{model}_{year}.nc')
+    '{variable}_{transformation_name}_{model}_{{year}}.nc')
 
 ADDITIONAL_METADATA = dict(
     description=__doc__.strip(),
