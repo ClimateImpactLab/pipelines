@@ -159,6 +159,7 @@ class JobRunner(object):
                 f.write(call)
 
             os.system('sbatch {flags} job.sh'.format(flags=' '.join(run_flags)))
+            os.system('sleep 1')
             os.remove('job.sh')
 
 

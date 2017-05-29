@@ -20,7 +20,7 @@ __contact__ = 'jsimcock@rhg.com'
 __version__ = '0.1.0'
 
 BCSD_orig_files  = (
-    '/global/scratch/jiacany/nasa_bcsd/{rcp}/' +
+    '/global/scratch/jiacany/nasa_bcsd/raw_data/{rcp}/' +
     '{model}/{variable}/' +
     '{variable}_day_BCSD_{rcp}_r1i1p1_{model}_{year}.nc')
 
@@ -51,9 +51,9 @@ JOBS = [
 
     ]
 
-PERIODS = ([
-    dict(rcp=rcp, pername='annual', year=year)
-        for year in range(1981, 2100) for rcp in ['rcp85']])
+PERIODS = (
+        dict(rcp='historical' , pername='annual', year=list(range(1981, 2006))),
+        dict(rcp='rcp85', pername='annual', year=list(range(2006, 2100))))
 
 MODELS = list(map(lambda x: dict(model=x), [
     'ACCESS1-0',
