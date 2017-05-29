@@ -40,8 +40,8 @@ ADDITIONAL_METADATA = dict(
     project='gcp', 
     team='climate',
     geography='hierid',
-    weighting='areawt',
-    frequency='20yr')
+    weighting='popwt',
+    frequency='annual')
 
 JOBS = [
     dict(variable='tasmax', transformation_name='tasmax-over-27C-pow1', transformation=trn.tasmax_over_27C_pow1),

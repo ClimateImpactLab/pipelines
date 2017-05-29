@@ -556,10 +556,13 @@ class bcsd_transform_annual(bcsd_transform):
             aggwt,
             weights=None):
 
-        print(read_file)
-        print(write_file)
-        print(metadata)
-        # for y in years:
+        # print(read_file)
+        # print(write_file)
+        #print(metadata)
+        for y in years:
+            print(read_file.format(year=y))
+            print(write_file.format(year=y))
+
         #         # Load pickled transformation
         #     transformation = pipelines.load_func(transformation)
 
