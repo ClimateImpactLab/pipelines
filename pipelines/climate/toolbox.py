@@ -556,38 +556,41 @@ class bcsd_transform_annual(bcsd_transform):
             aggwt,
             weights=None):
 
-        for y in years:
-                # Load pickled transformation
-            transformation = pipelines.load_func(transformation)
+        print(read_file)
+        print(write_file)
+        print(metadata)
+        # for y in years:
+        #         # Load pickled transformation
+        #     transformation = pipelines.load_func(transformation)
 
-            # Get transformed data
-            ds = xr.Dataset(load_climate_data(
-                        read_file.format(year=y),
-                        variable,
-                        broadcast_dims=('time',))
-                    .pipe(transformation))
+        #     # Get transformed data
+        #     ds = xr.Dataset(load_climate_data(
+        #                 read_file.format(year=y),
+        #                 variable,
+        #                 broadcast_dims=('time',))
+        #             .pipe(transformation))
         
-        # Reshape to regions
-            if not agglev.startswith('grid'):
-                ds = weighted_aggregate_grid_to_regions(
-                        ds, variable, aggwt, agglev, weights=weights)
+        # # Reshape to regions
+        #     if not agglev.startswith('grid'):
+        #         ds = weighted_aggregate_grid_to_regions(
+        #                 ds, variable, aggwt, agglev, weights=weights)
 
-            # Update netCDF metadata
-            ds.attrs.update(**metadata)
+        #     # Update netCDF metadata
+        #     ds.attrs.update(**metadata)
 
-            # Write output
-            if not os.path.isdir(os.path.dirname(write_file.format(
-                            agglev=agglev, 
-                            rcp=rcp, 
-                            variable=variable, 
-                            transformation_name=transformation_name))):
-                os.makedirs(os.path.dirname(write_file.format(
-                            agglev=agglev, 
-                            rcp=rcp, 
-                            variable=variable, 
-                            transformation_name=transformation_name)))
+        #     # Write output
+        #     if not os.path.isdir(os.path.dirname(write_file.format(
+        #                     agglev=agglev, 
+        #                     rcp=rcp, 
+        #                     variable=variable, 
+        #                     transformation_name=transformation_name))):
+        #         os.makedirs(os.path.dirname(write_file.format(
+        #                     agglev=agglev, 
+        #                     rcp=rcp, 
+        #                     variable=variable, 
+        #                     transformation_name=transformation_name)))
 
-            ds.to_netcdf(write_file.format(year=y))
+        #     ds.to_netcdf(write_file.format(year=y))
 
 
 
