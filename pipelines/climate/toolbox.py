@@ -576,10 +576,18 @@ class bcsd_transform_annual(bcsd_transform):
             ds.attrs.update(**metadata)
 
             # Write output
-            if not os.path.isdir(os.path.dirname(write_file)):
-                os.makedirs(os.path.dirname(write_file))
+            if not os.path.isdir(os.path.dirname(write_file.format(
+                            agglev=agglev, 
+                            rcp=rcp, 
+                            variable=variable, 
+                            transformation_name=transformation_name))):
+                os.makedirs(os.path.dirname(write_file.format(
+                            agglev=agglev, 
+                            rcp=rcp, 
+                            variable=variable, 
+                            transformation_name=transformation_name)))
 
-            ds.to_netcdf(write_file)
+            ds.to_netcdf(write_file.format(year=y))
 
 
 
