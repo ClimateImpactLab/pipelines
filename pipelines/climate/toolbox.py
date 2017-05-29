@@ -556,13 +556,13 @@ class bcsd_transform_annual(bcsd_transform):
             aggwt,
             weights=None):
 
-        for year in years:
+        for y in years:
                 # Load pickled transformation
             transformation = pipelines.load_func(transformation)
 
             # Get transformed data
             ds = xr.Dataset(load_climate_data(
-                        read_file.format(year=year),
+                        read_file.format(year=y),
                         variable,
                         broadcast_dims=('time',))
                     .pipe(transformation))
