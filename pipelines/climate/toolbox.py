@@ -562,6 +562,7 @@ class bcsd_transform_annual(bcsd_transform):
         for y in years:
             print(read_file.format(year=y))
             wf = str(write_file.format(year=y))
+            print(type(wf))
             print(wf)
 
 
@@ -574,6 +575,7 @@ class bcsd_transform_annual(bcsd_transform):
                         variable,
                         broadcast_dims=('time',))
                     .pipe(transformation))
+            print(ds)
         
         # Reshape to regions
             if not agglev.startswith('grid'):
@@ -594,6 +596,11 @@ class bcsd_transform_annual(bcsd_transform):
                             rcp=rcp, 
                             variable=variable, 
                             transformation_name=transformation_name)))
+            print(write_file.format(
+                            agglev=agglev, 
+                            rcp=rcp, 
+                            variable=variable, 
+                            transformation_name=transformation_name))
 
             ds.to_netcdf(wf)
 
