@@ -550,35 +550,36 @@ class bcsd_transform_annual(bcsd_transform):
             metadata,
             rcp,
             pername,
-            year,
+            years,
             model,
             agglev,
             aggwt,
             weights=None):
 
+        for year in years:
                 # Load pickled transformation
-        transformation = pipelines.load_func(transformation)
+            transformation = pipelines.load_func(transformation)
 
-        # Get transformed data
-        ds = xr.Dataset(load_climate_data(
-                    read_file,
-                    variable,
-                    broadcast_dims=('time',))
-                .pipe(transformation))
-    
-    # Reshape to regions
-        if not agglev.startswith('grid'):
-            ds = weighted_aggregate_grid_to_regions(
-                    ds, variable, aggwt, agglev, weights=weights)
+            # Get transformed data
+            ds = xr.Dataset(load_climate_data(
+                        read_file.format(year=year),
+                        variable,
+                        broadcast_dims=('time',))
+                    .pipe(transformation))
+        
+        # Reshape to regions
+            if not agglev.startswith('grid'):
+                ds = weighted_aggregate_grid_to_regions(
+                        ds, variable, aggwt, agglev, weights=weights)
 
-        # Update netCDF metadata
-        ds.attrs.update(**metadata)
+            # Update netCDF metadata
+            ds.attrs.update(**metadata)
 
-        # Write output
-        if not os.path.isdir(os.path.dirname(write_file)):
-            os.makedirs(os.path.dirname(write_file))
+            # Write output
+            if not os.path.isdir(os.path.dirname(write_file)):
+                os.makedirs(os.path.dirname(write_file))
 
-        ds.to_netcdf(write_file)
+            ds.to_netcdf(write_file)
 
 
 
