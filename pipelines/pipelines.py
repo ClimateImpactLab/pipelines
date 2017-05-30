@@ -138,7 +138,7 @@ class JobRunner(object):
                 '--mem-per-cpu=8000',
                 '--cpus-per-task=2',
                 '--time=72:00:00',
-                '--array={}'.format(','.join(map(str, job['years'])))]
+                '--array={}-{}'.format(job['years'][0], job['years'][-1])]
 
             metadata = self._build_metadata(job)
 
