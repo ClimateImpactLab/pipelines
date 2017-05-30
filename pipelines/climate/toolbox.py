@@ -328,7 +328,7 @@ def _aggregate_reindexed_data_to_regions(
             ds[aggwt]
                 .groupby(agglev)
                 .sum(dim='reshape_index'))
-        for variable in ds.data_vars.keys()})
+        for variable in ds.data_vars.keys() if variable != aggwt})
 
     return weighted
 
