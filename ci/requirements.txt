@@ -11,5 +11,5 @@ boto3==1.4.4
 datafs==0.7.1
 bumpversion==0.5.3
 watchdog==0.8.3
-cryptography==1.8.1
+cryptography==1.9
 joblib==0.11
