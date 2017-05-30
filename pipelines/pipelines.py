@@ -293,8 +293,10 @@ def prep_func(func):
 
     if not os.path.isdir('pipes'):
         os.makedirs('pipes')
+    print(funcname)
 
     fp = 'pipes/{}'.format(funcname)
+    print(fp)
 
     with open(fp, 'wb+') as f:
         pickled = dill.dump(func, f)
@@ -303,6 +305,8 @@ def prep_func(func):
 
 
 def load_func(func):
+    print(func)
     fp = 'pipes/{}'.format(func)
+    print(fp)
     with open(fp, 'rb') as f:
         return dill.load(f)
