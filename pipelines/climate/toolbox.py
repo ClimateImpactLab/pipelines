@@ -566,14 +566,14 @@ class bcsd_transform_annual(bcsd_transform):
             # Load pickled transformation
             transformation = pipelines.load_func(transformation)
 
-            Get transformed data
+            # Get transformed data
             ds = xr.Dataset(load_climate_data(
                         read_file.format(year=y),
                         variable,
                         broadcast_dims=('time',))
                     .pipe(transformation))
         
-        Reshape to regions
+            # Reshape to regions
             if not agglev.startswith('grid'):
                 ds = weighted_aggregate_grid_to_regions(
                         ds, variable, aggwt, agglev, weights=weights)
