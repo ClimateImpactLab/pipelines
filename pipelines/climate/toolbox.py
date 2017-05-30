@@ -562,7 +562,7 @@ class bcsd_transform_annual(bcsd_transform):
                                 variable, transformation_name, model, y)
 
             dirname = write_file.split(FILE_NAME)[0]
-                # Load pickled transformation
+            # Load pickled transformation
             transformation = pipelines.load_func(transformation)
 
             # Get transformed data
@@ -595,8 +595,6 @@ class bcsd_transform_annual(bcsd_transform):
                             model=model)))
 
             ds.to_netcdf(write_file.format(year=y))
-
-
 
 
 
