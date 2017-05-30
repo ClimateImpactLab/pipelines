@@ -152,7 +152,7 @@ class JobRunner(object):
             kwargs['metadata'] = metadata
 
             # logger.info('beginning job {} of {}'.format(i, self._njobs))
-            call = ("{header}\n\n{array}\n\npython -c 'print("hello")'".format(
+            call = ("{header}\n\n{array}\n\npython -c 'print('hello')'".format(
                 header='#!/bin/bash',
                 # module=self._runner.__module__,
                 # func=self._runner.__name__, 
