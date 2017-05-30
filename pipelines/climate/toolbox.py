@@ -556,15 +556,14 @@ class bcsd_transform_annual(bcsd_transform):
             aggwt,
             weights=None):
 
+        FILE_NAME = '{}_{}_{}_{{year}}.nc'.format(
+                            variable, transformation_name, model)
+        dirname = write_file.split(FILE_NAME)[0]
+
+        print(dirname)
         for y in years:
 
-            write_file = write_file.format(year=y)
-            FILE_NAME = '{}_{}_{}_{}.nc'.format(
-                                variable, transformation_name, model, y)
-
-            dirname = write_file.split(FILE_NAME)[0]
-            print(dirname)
-            print(FILE_NAME)
+            print(write_file.format(year=y))
             # Load pickled transformation
             #transformation = pipelines.load_func(transformation)
 
