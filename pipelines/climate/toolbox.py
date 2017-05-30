@@ -556,17 +556,12 @@ class bcsd_transform_annual(bcsd_transform):
             aggwt,
             weights=None):
 
-        # print(read_file)
-        # print(write_file)
-        #print(metadata)
         for y in years:
-            print(read_file.format(year=y))
-            base = write_file[0]
-            fname = write_file[1]
-            fname_year = str(write_file[1].format(year=y))
-            print(fname_year)
 
+            FILE_NAME = '{variable}_{transformation_name}_{model}_{year}.nc'.format(
+                                variable, transformation_name, model, y)
 
+            dirname = write_file.split(FILE_NAME)[0]
                 # Load pickled transformation
             transformation = pipelines.load_func(transformation)
 
@@ -586,20 +581,20 @@ class bcsd_transform_annual(bcsd_transform):
             ds.attrs.update(**metadata)
 
             # Write output
-            if not os.path.isdir(os.path.dirname(base.format(
+            if not os.path.isdir(os.path.dirname(dirname.format(
                             agglev=agglev, 
                             rcp=rcp, 
                             variable=variable, 
                             transformation_name=transformation_name, 
                             model=model))):
-                os.makedirs(os.path.dirname(base.format(
+                os.makedirs(os.path.dirname(dirname.format(
                             agglev=agglev, 
                             rcp=rcp, 
                             variable=variable, 
                             transformation_name=transformation_name, 
                             model=model)))
 
-            ds.to_netcdf(base+fname_year)
+            ds.to_netcdf(write_file.format(year=y))
 
 
 
