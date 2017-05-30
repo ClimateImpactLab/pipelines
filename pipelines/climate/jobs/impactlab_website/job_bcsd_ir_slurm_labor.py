@@ -32,7 +32,8 @@ BCSD_orig_files = os.path.join(
 
 WRITE_PATH = os.path.join(
     '~/data/{agglev}/{rcp}',
-    '{variable}/{variable}_{model}_{pername}.nc')
+    '{variable}/{transformation_name}/{model}',
+    '{variable}_{transformation_name}_{model}_{{year}}.nc')
 
 # WRITE_PATH = os.path.join(
 #     '/global/scratch/jsimcock/gcp/climate/{agglev}/{rcp}',
@@ -65,7 +66,7 @@ JOBS = [
     ]
 
 PERIODS = (
-        dict(rcp='historical' , pername='annual', years=list(range(1981, 1983))))
+        dict(rcp='historical' , pername='annual', years=list(range(1981, 1986))))
         # dict(rcp='rcp85', pername='annual', years=list(range(2006, 2100))))
 
 MODELS = list(map(lambda x: dict(model=x), [
