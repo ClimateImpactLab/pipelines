@@ -138,7 +138,7 @@ class JobRunner(object):
                 '--mem-per-cpu=4000',
                 '--cpus-per-task=1',
                 '--time=72:00:00',
-                '$echo: $SLURM_ARRAY_TASK_ID'
+                'echo $SLURM_ARRAY_TASK_ID'
                 ]
 
             metadata = self._build_metadata(job)
@@ -161,7 +161,7 @@ class JobRunner(object):
             with open('job.sh', 'w+') as f:
                 f.write(call)
 
-            os.system('sbatch {flags} job.sh '.format(flags=' '.join(run_flags)))
+            os.system('sbatch job.sh {flags}'.format(flags=' '.join(run_flags)))
             #os.system('sleep 0.5')
             os.remove('job.sh')
 
