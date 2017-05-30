@@ -135,10 +135,11 @@ class JobRunner(object):
                 '--account=co_laika',
                 '--qos=laika_bigmem2_normal',
                 '--nodes=1',
-                '--ntasks-per-node=5',
-                '--mem-per-cpu=8000',
-                '--cpus-per-task=2',
-                '--time=72:00:00'
+                '--ntasks-per-node=20',
+                '--mem-per-cpu=4000',
+                '--cpus-per-task=1',
+                '--time=72:00:00',
+                'echo: $SLURM_ARRAY_TASK_ID'
                 ]
 
             metadata = self._build_metadata(job)
@@ -151,16 +152,17 @@ class JobRunner(object):
             kwargs['metadata'] = metadata
 
             # logger.info('beginning job {} of {}'.format(i, self._njobs))
-            call = ("{header}\n\npython -m {module} {func} '{job}'".format(
+            call = ("{header}\n\n{array}\n\npython -c "print('hello')"".format(
                 header='#!/bin/bash',
-                module=self._runner.__module__,
-                func=self._runner.__name__, 
-                job=json.dumps(kwargs)))
+                # module=self._runner.__module__,
+                # func=self._runner.__name__, 
+                # job=json.dumps(kwargs), 
+                array='array={}-{}'.format(job['years'][0], job['years'][1])))
 
             with open('job.sh', 'w+') as f:
                 f.write(call)
 
-            os.system('sbatch {flags} job.sh'.format(flags=' '.join(run_flags)))
+            os.system('sbatch {flags} job.sh '.format(flags=' '.join(run_flags)))
             os.system('sleep 0.5')
             os.remove('job.sh')
 
