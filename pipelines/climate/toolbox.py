@@ -550,56 +550,47 @@ class bcsd_transform_annual(bcsd_transform):
             metadata,
             rcp,
             pername,
-            years,
+            year,
             model,
             agglev,
             aggwt,
             weights=None):
 
-        FILE_NAME = '{}_{}_{}_{{year}}.nc'.format(
-                            variable, transformation_name, model)
-        dirname = write_file.split(FILE_NAME)[0]
+        # FILE_NAME = '{}_{}_{}_{{year}}.nc'.format(
+        #                     variable, transformation_name, model)
+        # dirname = write_file.split(FILE_NAME)[0]
 
-        print(dirname)
-        print(transformation)
+        # print(dirname)
+        # print(transformation)
 
-        for y in years:
-
-            # Load pickled transformation
-            transformation = pipelines.load_func(transformation)
+        # Load pickled transformation
+        transformation_unpickled = pipelines.load_func(transformation)
 
 
-            # Get transformed data
-            ds = xr.Dataset(load_climate_data(
-                        read_file.format(year=y),
-                        variable,
-                        broadcast_dims=('time',))
-                    .pipe(transformation))
-        
-            # Reshape to regions
-            if not agglev.startswith('grid'):
-                ds = weighted_aggregate_grid_to_regions(
-                        ds, variable, aggwt, agglev, weights=weights)
+        # Get transformed data
+        ds = xr.Dataset(load_climate_data(
+                    read_file.format(year=year),
+                    variable,
+                    broadcast_dims=('time',))
+                .pipe(transformation_unpickled))
+    
+        # Reshape to regions
+        if not agglev.startswith('grid'):
+            ds = weighted_aggregate_grid_to_regions(
+                    ds, variable, aggwt, agglev, weights=weights)
 
-            # Update netCDF metadata
-            ds.attrs.update(**metadata)
+        # Update netCDF metadata
+        ds.attrs.update(**metadata)
 
-            # Write output
-            if not os.path.isdir(os.path.dirname(dirname.format(
-                            agglev=agglev, 
-                            rcp=rcp, 
-                            variable=variable, 
-                            transformation_name=transformation_name, 
-                            model=model))):
-                os.makedirs(os.path.dirname(dirname.format(
-                            agglev=agglev, 
-                            rcp=rcp, 
-                            variable=variable, 
-                            transformation_name=transformation_name, 
-                            model=model)))
+        # Write output
 
-            ds.to_netcdf(write_file.format(year=y))
-            print('writing to: {}'.format(write_file.format(year=y)))
+        outpath = write_file.format(year=year)
+
+        if not os.path.isdir(os.path.dirname(outpath)):
+            os.makedirs(os.path.dirname(outpath))
+
+        ds.to_netcdf(outpath)
+        print('writing to: {}'.format(outpath))
 
 
 
@@ -751,9 +742,13 @@ class pattern_transform(object):
 @click.command()
 @click.argument('command')
 @click.argument('kwargs')
-def main(command, kwargs):
+@click.argument('--year', default=None, type=int, help='override run year')
+def main(command, kwargs, year=None):
 
     kwargs = json.loads(kwargs)
+
+    if year is not None:
+        kwargs['year'] = year
 
     if command in globals():
         globals()[command].run(**kwargs)
