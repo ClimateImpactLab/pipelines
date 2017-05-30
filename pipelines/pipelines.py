@@ -152,7 +152,7 @@ class JobRunner(object):
             kwargs['metadata'] = metadata
 
             # logger.info('beginning job {} of {}'.format(i, self._njobs))
-            call = ("{header}\n\n{array}\n\npython -c "print('hello')"".format(
+            call = ("{header}\n\n{array}\n\npython -c 'print("hello")'".format(
                 header='#!/bin/bash',
                 # module=self._runner.__module__,
                 # func=self._runner.__name__, 
@@ -163,7 +163,7 @@ class JobRunner(object):
                 f.write(call)
 
             os.system('sbatch {flags} job.sh '.format(flags=' '.join(run_flags)))
-            os.system('sleep 0.5')
+            #os.system('sleep 0.5')
             os.remove('job.sh')
 
 
