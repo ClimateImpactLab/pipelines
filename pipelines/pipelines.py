@@ -150,7 +150,7 @@ class JobRunner(object):
             kwargs['metadata'] = metadata
 
             # logger.info('beginning job {} of {}'.format(i, self._njobs))
-            call = ("{header}\n\n{array}\n\npython -c 'print('hello')'".format(
+            call = ("{header}\n\n{array}\n\npython -c 'print($SLURM_ARRAY_TASK_ID)'".format(
                 header='#!/bin/bash',
                 # module=self._runner.__module__,
                 # func=self._runner.__name__, 
@@ -160,7 +160,7 @@ class JobRunner(object):
             with open('job.sh', 'w+') as f:
                 f.write(call)
 
-            os.system('sbatch {flags} job.sh echo $SLURM_ARRAY_TASK_ID'.format(flags=' '.join(run_flags)))
+            os.system('sbatch {flags} job.sh'.format(flags=' '.join(run_flags)))
             #os.system('sleep 0.5')
             os.remove('job.sh')
 
