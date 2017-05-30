@@ -578,7 +578,7 @@ class bcsd_transform_annual(bcsd_transform):
                 ds = weighted_aggregate_grid_to_regions(
                         ds, variable, aggwt, agglev, weights=weights)
 
-            Update netCDF metadata
+            # Update netCDF metadata
             ds.attrs.update(**metadata)
 
             # Write output
