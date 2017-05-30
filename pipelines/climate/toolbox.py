@@ -550,7 +550,7 @@ class bcsd_transform_annual(bcsd_transform):
             metadata,
             rcp,
             pername,
-            year,
+            years,
             model,
             agglev,
             aggwt,
@@ -566,10 +566,11 @@ class bcsd_transform_annual(bcsd_transform):
         # Load pickled transformation
         transformation_unpickled = pipelines.load_func(transformation)
 
+        for y in years
 
         # Get transformed data
         ds = xr.Dataset(load_climate_data(
-                    read_file.format(year=year),
+                    read_file.format(year=y),
                     variable,
                     broadcast_dims=('time',))
                 .pipe(transformation_unpickled))
@@ -584,7 +585,7 @@ class bcsd_transform_annual(bcsd_transform):
 
         # Write output
 
-        outpath = write_file.format(year=year)
+        outpath = write_file.format(year=y)
 
         if not os.path.isdir(os.path.dirname(outpath)):
             os.makedirs(os.path.dirname(outpath))
@@ -742,13 +743,13 @@ class pattern_transform(object):
 @click.command()
 @click.argument('command')
 @click.argument('kwargs')
-@click.argument('--year', default=None, type=int)
-def main(command, kwargs, year=None):
+#@click.argument('--year', default=None, type=int, help='override run year')
+def main(command, kwargs):
 
     kwargs = json.loads(kwargs)
 
-    if year is not None:
-        kwargs['year'] = year
+    # if year is not None:
+    #     kwargs['year'] = year
 
     if command in globals():
         globals()[command].run(**kwargs)
