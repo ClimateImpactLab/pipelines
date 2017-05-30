@@ -83,9 +83,10 @@ class JobRunner(object):
 
     def _get_jobs(self):
 
+        print(self._iteration_components)
         for i, job_components in enumerate(
                 itertools.product(*self._iteration_components)):
-
+            print(job_components)
             job = {}
             for job_component in job_components:
                 job.update(job_component)
