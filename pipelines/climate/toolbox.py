@@ -561,8 +561,10 @@ class bcsd_transform_annual(bcsd_transform):
         #print(metadata)
         for y in years:
             print(read_file.format(year=y))
-            wf = str(write_file.format(year=y))
-            print(wf)
+            base = write_file[0]
+            fname = write_file[1]
+            fname_year = str(write_file[1].format(year=y))
+            print(fname_year)
 
 
                 # Load pickled transformation
@@ -584,23 +586,20 @@ class bcsd_transform_annual(bcsd_transform):
             ds.attrs.update(**metadata)
 
             # Write output
-            # if not os.path.isdir(os.path.dirname(write_file.format(
-            #                 agglev=agglev, 
-            #                 rcp=rcp, 
-            #                 variable=variable, 
-            #                 transformation_name=transformation_name))):
-            #     os.makedirs(os.path.dirname(write_file.format(
-            #                 agglev=agglev, 
-            #                 rcp=rcp, 
-            #                 variable=variable, 
-            #                 transformation_name=transformation_name)))
-            # print(write_file.format(
-            #                 agglev=agglev, 
-            #                 rcp=rcp, 
-            #                 variable=variable, 
-            #                 transformation_name=transformation_name))
+            if not os.path.isdir(os.path.dirname(base.format(
+                            agglev=agglev, 
+                            rcp=rcp, 
+                            variable=variable, 
+                            transformation_name=transformation_name, 
+                            model=model))):
+                os.makedirs(os.path.dirname(base.format(
+                            agglev=agglev, 
+                            rcp=rcp, 
+                            variable=variable, 
+                            transformation_name=transformation_name, 
+                            model=model)))
 
-            ds.to_netcdf(wf)
+            ds.to_netcdf(base+fname_year)
 
 
 
