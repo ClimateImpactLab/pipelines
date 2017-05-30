@@ -742,7 +742,7 @@ class pattern_transform(object):
 @click.command()
 @click.argument('command')
 @click.argument('kwargs')
-@click.argument('--year', default=None, type=int, help='override run year')
+@click.argument('--year', default=None, type=int)
 def main(command, kwargs, year=None):
 
     kwargs = json.loads(kwargs)
