@@ -67,6 +67,8 @@ def tasmax_over_27C_pow3(ds):
     Sum of tasmax**3 for days with tasmax between 0C and 27C
     '''
 
+
+
     ds['gt_27'] = (((ds.tasmax - 273.15).where((ds.tasmax -273.15) > 27.))**3).sum(dim='time')
     ds['gt_0_lt_27'] = (((ds.tasmax - 273.15).where((0 < (ds.tasmax - 273.15)) & ((ds.tasmax - 273.15) < 27)))**3).sum(dim='time')
 

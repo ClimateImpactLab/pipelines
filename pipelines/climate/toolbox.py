@@ -282,7 +282,6 @@ def _reindex_spatial_data_to_regions(ds, df):
 
 def _aggregate_reindexed_data_to_regions(
         ds,
-        variable,
         aggwt,
         agglev,
         weights,
@@ -294,9 +293,6 @@ def _aggregate_reindexed_data_to_regions(
     ----------
 
     ds: xarray.DataArray
-
-    variable: str
-        name of the data variable
 
     aggwt: str
         variable to weight by (i.e popwt, areawt, cropwt)
@@ -331,7 +327,8 @@ def _aggregate_reindexed_data_to_regions(
                 .sum(dim='reshape_index') /
             ds[aggwt]
                 .groupby(agglev)
-                .sum(dim='reshape_index'))})
+                .sum(dim='reshape_index'))
+        for variable in ds.data_vars.keys()})
 
     return weighted
 
@@ -378,7 +375,6 @@ def load_climate_data(fp, varname, lon_name='lon', broadcast_dims=('time',)):
 
 def weighted_aggregate_grid_to_regions(
         ds,
-        variable,
         aggwt,
         agglev,
         weights=None):
@@ -389,10 +385,7 @@ def weighted_aggregate_grid_to_regions(
     ----------
     ds : xr.Dataset
         xarray Dataset to be aggregated. Must have 'lat' and 'lon' in the
-        coordinates.
-
-    variable : str
-        name of the variable to be aggregated
+        coordinates. All data vars will be reshaped.
 
     aggwt : str
         Weighting variable (e.g. 'popwt', 'areawt'). This must be a column name
@@ -418,7 +411,6 @@ def weighted_aggregate_grid_to_regions(
     ds = _reindex_spatial_data_to_regions(ds, weights)
     ds = _aggregate_reindexed_data_to_regions(
         ds,
-        variable,
         aggwt,
         agglev,
         weights)
@@ -565,11 +557,10 @@ class bcsd_transform_annual(bcsd_transform):
 
         # Load pickled transformation
         transformation_unpickled = pipelines.load_func(transformation)
-
         for y in years:
 
             # Get transformed data
-            ds = xr.Dataset(load_climate_data(
+            ds = (load_climate_data(
                         read_file.format(year=y),
                         variable,
                         broadcast_dims=('time',))
@@ -578,7 +569,7 @@ class bcsd_transform_annual(bcsd_transform):
             # Reshape to regions
             if not agglev.startswith('grid'):
                 ds = weighted_aggregate_grid_to_regions(
-                        ds, variable, aggwt, agglev, weights=weights)
+                        ds, aggwt, agglev, weights=weights)
 
             # Update netCDF metadata
             ds.attrs.update(**metadata)
