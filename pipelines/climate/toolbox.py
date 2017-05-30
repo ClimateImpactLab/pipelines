@@ -558,6 +558,7 @@ class bcsd_transform_annual(bcsd_transform):
 
         for y in years:
 
+            write_file = write_file.format(year=y)
             FILE_NAME = '{}_{}_{}_{}.nc'.format(
                                 variable, transformation_name, model, y)
 
