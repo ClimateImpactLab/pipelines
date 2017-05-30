@@ -57,7 +57,7 @@ PERIODS = (
         dict(rcp='rcp85', pername='annual', years=list(range(2006, 2100))))
 
 MODELS = list(map(lambda x: dict(model=x), [
-    'ACCESS1-0']
+    'ACCESS1-0']))
     # 'bcc-csm1-1',
     # 'BNU-ESM',
     # 'CanESM2',
