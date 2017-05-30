@@ -24,7 +24,7 @@ BCSD_orig_files  = (
     '{model}/{variable}/' +
     '{variable}_day_BCSD_{rcp}_r1i1p1_{model}_{{year}}.nc')
 
-BASE_PATH = os.path.join(
+WRITE_PATH = os.path.join(
     '/global/scratch/jsimcock/gcp/climate/{agglev}/{rcp}',
     '{variable}/{transformation_name}/{model}',
     '{variable}_{transformation_name}_{model}_{{year}}.nc')
@@ -85,7 +85,7 @@ AGGREGATIONS = [{'agglev': 'hierid', 'aggwt': 'popwt'}]
 @pipelines.register('job_bcsd_ir_slurm_labor')
 @pipelines.add_metadata(ADDITIONAL_METADATA)
 @pipelines.read_patterns(BCSD_orig_files)
-@pipelines.write_pattern(BASE_PATH)
+@pipelines.write_pattern(WRITE_PATH)
 @pipelines.iterate(JOBS, PERIODS, MODELS, AGGREGATIONS)
 @pipelines.run(workers=1)
 def job_bcsd_ir_slurm_labor(*args, **kwargs):

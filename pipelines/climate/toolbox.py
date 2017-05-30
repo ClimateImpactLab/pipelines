@@ -563,24 +563,23 @@ class bcsd_transform_annual(bcsd_transform):
         print(dirname)
         for y in years:
 
-            print(write_file.format(year=y))
             # Load pickled transformation
-            #transformation = pipelines.load_func(transformation)
+            transformation = pipelines.load_func(transformation)
 
-            # Get transformed data
-            # ds = xr.Dataset(load_climate_data(
-            #             read_file.format(year=y),
-            #             variable,
-            #             broadcast_dims=('time',))
-            #         .pipe(transformation))
+            Get transformed data
+            ds = xr.Dataset(load_climate_data(
+                        read_file.format(year=y),
+                        variable,
+                        broadcast_dims=('time',))
+                    .pipe(transformation))
         
-        # Reshape to regions
-            # if not agglev.startswith('grid'):
-            #     ds = weighted_aggregate_grid_to_regions(
-            #             ds, variable, aggwt, agglev, weights=weights)
+        Reshape to regions
+            if not agglev.startswith('grid'):
+                ds = weighted_aggregate_grid_to_regions(
+                        ds, variable, aggwt, agglev, weights=weights)
 
-            # Update netCDF metadata
-            #ds.attrs.update(**metadata)
+            Update netCDF metadata
+            ds.attrs.update(**metadata)
 
             # Write output
             if not os.path.isdir(os.path.dirname(dirname.format(
@@ -596,7 +595,8 @@ class bcsd_transform_annual(bcsd_transform):
                             transformation_name=transformation_name, 
                             model=model)))
 
-            #ds.to_netcdf(write_file.format(year=y))
+            ds.to_netcdf(write_file.format(year=y))
+            print('writing to: {}'.format(write_file.format(year=y)))
 
 
 
