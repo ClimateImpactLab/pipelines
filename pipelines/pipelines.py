@@ -134,11 +134,10 @@ class JobRunner(object):
                 '--account=co_laika',
                 '--qos=laika_bigmem2_normal',
                 '--nodes=1',
-                '--ntasks-per-node=20',
-                '--mem-per-cpu=4000',
+                '--ntasks-per-node=5',
+                '--mem-per-cpu=8000',
                 '--cpus-per-task=1',
-                '--time=72:00:00',
-                '--array={}-{}'.format(job['years'][0], job['years'][1])
+                '--time=72:00:00'
                 ]
 
             metadata = self._build_metadata(job)
@@ -151,19 +150,18 @@ class JobRunner(object):
             kwargs['metadata'] = metadata
 
             # logger.info('beginning job {} of {}'.format(i, self._njobs))
-            call = ("{header}\n\npython -m {module} {func} '{job}' year={year}".format(
+            call = ("{header}\n\npython -m {module} {func} '{job}'".format(
                 header='#!/bin/bash',
                 module=self._runner.__module__,
                 func=self._runner.__name__, 
-                job=json.dumps(kwargs),
-                year='\"$SLURM_ARRAY_TASK_ID\"'
+                job=json.dumps(kwargs)
                 ))
 
             with open('job.sh', 'w+') as f:
                 f.write(call)
 
             os.system('sbatch {flags} job.sh'.format(flags=' '.join(run_flags)))
-            #os.system('sleep 0.5')
+            os.system('sleep 0.5')
             os.remove('job.sh')
 
 
@@ -203,7 +201,6 @@ class JobRunner(object):
 
                 # ideally, test to make sure all the inputs exist on datafs
                 # check_datafs(job)
-
                 kwargs = {k: v for k, v in job.items()}
 
                 kwargs['write_file'] = os.path.join(tmp, 'sample_out.nc')

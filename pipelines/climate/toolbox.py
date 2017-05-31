@@ -542,7 +542,7 @@ class bcsd_transform_annual(bcsd_transform):
             metadata,
             rcp,
             pername,
-            year,
+            years,
             model,
             agglev,
             aggwt,
@@ -557,32 +557,32 @@ class bcsd_transform_annual(bcsd_transform):
 
         # Load pickled transformation
         transformation_unpickled = pipelines.load_func(transformation)
-        #for y in years:
+        for y in years:
 
             # Get transformed data
-        ds = (load_climate_data(
-                    read_file.format(year=year),
-                    variable,
-                    broadcast_dims=('time',))
-                .pipe(transformation_unpickled))
-    
-        # Reshape to regions
-        if not agglev.startswith('grid'):
-            ds = weighted_aggregate_grid_to_regions(
-                    ds, aggwt, agglev, weights=weights)
+            ds = (load_climate_data(
+                        read_file.format(year=y),
+                        variable,
+                        broadcast_dims=('time',))
+                    .pipe(transformation_unpickled))
+        
+            # Reshape to regions
+            if not agglev.startswith('grid'):
+                ds = weighted_aggregate_grid_to_regions(
+                        ds, aggwt, agglev, weights=weights)
 
-        # Update netCDF metadata
-        ds.attrs.update(**metadata)
+            # Update netCDF metadata
+            ds.attrs.update(**metadata)
 
-        # Write output
+            # Write output
 
-        outpath = write_file.format(year=year)
+            outpath = write_file.format(year=y)
 
-        if not os.path.isdir(os.path.dirname(outpath)):
-            os.makedirs(os.path.dirname(outpath))
+            if not os.path.isdir(os.path.dirname(outpath)):
+                os.makedirs(os.path.dirname(outpath))
 
-        ds.to_netcdf(outpath)
-        print('writing to: {}'.format(outpath))
+            ds.to_netcdf(outpath)
+            print('writing to: {}'.format(outpath))
 
 
 
