@@ -137,7 +137,8 @@ class JobRunner(object):
                 '--ntasks-per-node=20',
                 '--mem-per-cpu=4000',
                 '--cpus-per-task=1',
-                '--time=72:00:00'
+                '--time=72:00:00',
+                '--array={}-{}'.format(job['years'][0], job['years'][1])
                 ]
 
             metadata = self._build_metadata(job)
@@ -150,12 +151,13 @@ class JobRunner(object):
             kwargs['metadata'] = metadata
 
             # logger.info('beginning job {} of {}'.format(i, self._njobs))
-            call = ("{header}\n\n{array}\n\npython -c 'print(\'$SLURM_ARRAY_TASK_ID\')'".format(
+            call = ("{header}\n\npython -m {module} {func} '{job}' --year={year}".format(
                 header='#!/bin/bash',
-                # module=self._runner.__module__,
-                # func=self._runner.__name__, 
-                # job=json.dumps(kwargs), 
-                array='array={}-{}'.format(job['years'][0], job['years'][1])))
+                module=self._runner.__module__,
+                func=self._runner.__name__, 
+                job=json.dumps(kwargs), 
+                year='$SLURM_ARRAY_TASK_ID'
+                ))
 
             with open('job.sh', 'w+') as f:
                 f.write(call)
