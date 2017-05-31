@@ -734,13 +734,13 @@ class pattern_transform(object):
 @click.command()
 @click.argument('command')
 @click.argument('kwargs')
-@click.argument('--year', default=None, type=int)
+#@click.argument('--year', default=None, type=int)
 def main(command, kwargs):
 
     kwargs = json.loads(kwargs)
 
-    if year is not None:
-        kwargs['year'] = year
+    # if year is not None:
+    #     kwargs['year'] = year
 
     if command in globals():
         globals()[command].run(**kwargs)
