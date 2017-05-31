@@ -156,7 +156,7 @@ class JobRunner(object):
                 module=self._runner.__module__,
                 func=self._runner.__name__, 
                 job=json.dumps(kwargs),
-                year='\'$SLURM_ARRAY_TASK_ID\''
+                year='\"$SLURM_ARRAY_TASK_ID\"'
                 ))
 
             with open('job.sh', 'w+') as f:
