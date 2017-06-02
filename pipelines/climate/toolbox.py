@@ -71,6 +71,7 @@ def _fill_holes_xr(
         latitude above which no values will be interpolated (default 85)
 
     '''
+    t1 = time.time()
     if isinstance(broadcast_dims, string_types):
         broadcast_dims = (broadcast_dims, )
 
@@ -105,6 +106,8 @@ def _fill_holes_xr(
             maxlat=85)
 
         ds[varname][slicer_dict] = filled
+    t2 = time.time()
+    print('Fill Holes_xr complete: {}'.format(t2 - t1))
 
 
 def _fill_holes(var, lat, lon, gridsize=0.25, minlat=-85, maxlat=85):
@@ -135,6 +138,7 @@ def _fill_holes(var, lat, lon, gridsize=0.25, minlat=-85, maxlat=85):
     '''
     # fill the missing value regions by linear interpolation
     # pass if no missing values
+    t1 = time.time()
     if not np.ma.is_masked(var):
         return var
     # or the missing values are only in polar regions
@@ -172,6 +176,8 @@ def _fill_holes(var, lat, lon, gridsize=0.25, minlat=-85, maxlat=85):
                 (lon_box, lat_box),
                 method='linear')
 
+    t2 = time.time()
+    print('Fill Holes complete: {}'.format(t2 - t1))
     return var_filled
 
 
@@ -194,7 +200,7 @@ def _standardize_longitude_dimension(ds, lon_names=['lon', 'longitude']):
     scale the longitude dim to between (-180, 180)
 
     '''
-
+    t1 = time.time()
     coords = np.array(ds.coords.keys())
 
     assert len(coords[np.in1d(coords, lon_names)]) == 1
@@ -218,6 +224,8 @@ def _standardize_longitude_dimension(ds, lon_names=['lon', 'longitude']):
 
     ds = ds.rename({'_longitude_adjusted': _lon_coord})
 
+    t2 = time.time()
+    print('Standardize long dim complete: {}'.format(t2-t1))
     return ds
 
 
@@ -272,11 +280,14 @@ def _reindex_spatial_data_to_regions(ds, df):
 
 
     '''
+    t1 = time.time()
     res = ds.sel_points(
         'reshape_index',
         lat=df.lat.values,
         lon=df.lon.values)
 
+    t2 = time.time()
+    print('Sel Points complete: {}'.format(t2 -t1))
     return res
 
 
@@ -313,6 +324,7 @@ def _aggregate_reindexed_data_to_regions(
 
     '''
 
+    t1 = time.time()
     ds.coords[agglev] = xr.DataArray(
                 weights[agglev].values,
                 dims={'reshape_index': weights.index.values})
@@ -331,7 +343,11 @@ def _aggregate_reindexed_data_to_regions(
                 .sum(dim='reshape_index') /
             ds[aggwt]
                 .groupby(agglev)
-                .sum(dim='reshape_index'))})
+                .sum(dim='reshape_index')) 
+        for variable in ds.data_vars.keys() if variable != aggwt})
+
+    t2 = time.time()
+    print('Aggregation weighting complete: {}'.format(t2-t1))
 
     return weighted
 
@@ -374,6 +390,7 @@ def load_climate_data(fp, varname, lon_name='lon', broadcast_dims=('time',)):
 
         _fill_holes_xr(ds.load(), varname, broadcast_dims=broadcast_dims)
         return _standardize_longitude_dimension(ds, lon_names=lon_names)
+
 
 
 def weighted_aggregate_grid_to_regions(
@@ -536,6 +553,56 @@ class bcsd_transform(object):
     def run_test(cls, *args, **kwargs):
         weights = pd.read_pickle('pipelines/climate/test/data/weightsfile.pkl')
         cls.run(*args, weights=weights, **kwargs)
+
+
+class bcsd_transform_annual(bcsd_transform):
+
+    @staticmethod
+    def run(
+            read_file,
+            write_file,
+            variable,
+            transformation,
+            transformation_name,
+            metadata,
+            rcp,
+            pername,
+            years,
+            model,
+            agglev,
+            aggwt,
+            weights=None):
+
+
+        # Load pickled transformation
+        transformation_unpickled = pipelines.load_func(transformation)
+        for y in years:
+
+            # Get transformed data
+            ds = (load_climate_data(
+                        read_file.format(year=y),
+                        variable,
+                        broadcast_dims=('time',))
+                    .pipe(transformation_unpickled))
+            
+            # Reshape to regions
+            if not agglev.startswith('grid'):
+                ds = weighted_aggregate_grid_to_regions(
+                        ds, aggwt, agglev, weights=weights)
+
+            # Update netCDF metadata
+            ds.attrs.update(**metadata)
+
+            # Write output
+
+            outpath = write_file.format(year=y)
+
+            if not os.path.isdir(os.path.dirname(outpath)):
+                os.makedirs(os.path.dirname(outpath))
+
+            ds.to_netcdf(outpath)
+            print('writing to: {}'.format(outpath))
+
 
 
 class pattern_transform(object):
