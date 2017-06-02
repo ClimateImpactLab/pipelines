@@ -294,7 +294,6 @@ def _reindex_spatial_data_to_regions(ds, df):
 
 def _aggregate_reindexed_data_to_regions(
         ds,
-        variable,
         aggwt,
         agglev,
         weights,
