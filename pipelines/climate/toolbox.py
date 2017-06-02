@@ -12,6 +12,7 @@ from six import string_types
 import itertools
 import toolz
 import os
+import time
 import datafs
 import click
 import dill

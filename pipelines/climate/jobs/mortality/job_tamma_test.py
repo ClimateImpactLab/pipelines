@@ -6,6 +6,7 @@ Test to profile transformations on daily climate values
 from __future__ import absolute_import
 import os
 
+import time
 import pipelines
 import pipelines.climate.transformations as trn
 
