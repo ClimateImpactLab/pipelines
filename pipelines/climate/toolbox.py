@@ -396,7 +396,6 @@ def load_climate_data(fp, varname, lon_name='lon', broadcast_dims=('time',)):
 
 def weighted_aggregate_grid_to_regions(
         ds,
-        variable,
         aggwt,
         agglev,
         weights=None):
@@ -436,7 +435,6 @@ def weighted_aggregate_grid_to_regions(
     ds = _reindex_spatial_data_to_regions(ds, weights)
     ds = _aggregate_reindexed_data_to_regions(
         ds,
-        variable,
         aggwt,
         agglev,
         weights)
@@ -529,7 +527,7 @@ class bcsd_transform(object):
         # Reshape to regions
         if not agglev.startswith('grid'):
             ds = weighted_aggregate_grid_to_regions(
-                    ds, variable, aggwt, agglev, weights=weights)
+                    ds,aggwt, agglev, weights=weights)
 
         # Update netCDF metadata
         ds.attrs.update(**metadata)
@@ -724,7 +722,7 @@ class pattern_transform(object):
         # Reshape to regions
         if not agglev.startswith('grid'):
             ds = weighted_aggregate_grid_to_regions(
-                    ds, variable, aggwt, agglev, weights=weights)
+                    ds, aggwt, agglev, weights=weights)
 
         # Update netCDF metadata
         ds.attrs.update(**metadata)
