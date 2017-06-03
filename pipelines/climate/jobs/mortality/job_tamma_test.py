@@ -52,12 +52,12 @@ JOBS = [
 
     ]
 
-PERIODS = [dict(rcp='historical' , pername='annual', years=list(range(1981, 2006))),
-            dict(rcp='rcp85', pername='annual', years=list(range(2006, 2100)))]
+PERIODS = [dict(rcp='historical' , pername='annual', years=list(range(1981, 1983)))]
+            # dict(rcp='rcp85', pername='annual', years=list(range(2006, 2100)))]
 
 MODELS = list(map(lambda x: dict(model=x), [
-    'ACCESS1-0']))
-    # 'bcc-csm1-1',
+    # 'ACCESS1-0']))
+    'bcc-csm1-1']))
     # 'BNU-ESM',
     # 'CanESM2',
     # 'CCSM4',

@@ -92,11 +92,14 @@ def polynomials(ds):
     powers: 
     '''
     t1 = time.time()
+
+    keys = ds.data_vars.keys()
+
     for power in range(5):
         if power < 2:
             continue
 
-        for var in ds.data_vars.keys():
+        for var in keys:
             ds[var + '_{}'.format(power)] = ds[var]**power
 
     t2 = time.time()
