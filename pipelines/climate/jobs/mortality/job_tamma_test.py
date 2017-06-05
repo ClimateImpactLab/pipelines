@@ -16,7 +16,7 @@ from pipelines.climate.toolbox import (
     bcsd_transform_annual)
 
 
-__author__ = 'Justin Gerard'
+__author__ = 'Justin Simcock'
 __contact__ = 'jsimcock@rhg.com'
 __version__ = '0.1.0'
 
@@ -39,8 +39,8 @@ ADDITIONAL_METADATA = dict(
     contact=__contact__,
     version=__version__,
     repo='https://github.com/ClimateImpactLab/pipelines',
-    file='/climate/jobs/mortality/tamma_test.py',
-    execute='climate.jobs.mortality.tamma_test.main',
+    file='/climate/jobs/mortality/job_tamma_test.py',
+    execute='climate.jobs.mortality.job_tamma_test.main',
     project='gcp', 
     team='climate',
     geography='hierid',

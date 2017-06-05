@@ -100,7 +100,7 @@ def polynomials(ds):
             continue
 
         for var in keys:
-            ds[var + '_{}'.format(power)] = ds[var]**power
+            ds[var + '_{}'.format(power)] = (ds[var] - 273.15)**power
 
     t2 = time.time()
     print('Polynomial transformation complete: {}'.format(t2-t1))
