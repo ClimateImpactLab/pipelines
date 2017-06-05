@@ -58,14 +58,14 @@ ADDITIONAL_METADATA = dict(
     frequency='annual')
 
 JOBS = [
-    dict(variable='tasmax', transformation_name='tasmax-over-27C-pow1', transformation=trn.tasmax_over_27C_pow1),
-    dict(variable='tasmax', transformation_name='tasmax-over-27C-pow2', transformation=trn.tasmax_over_27C_pow2), 
-    dict(variable='tasmax', transformation_name='tasmax-over-27C-pow3', transformation=trn.tasmax_over_27C_pow3), 
+    # dict(variable='tasmax', transformation_name='tasmax-over-27C-pow1', transformation=trn.tasmax_over_27C_pow1),
+    # dict(variable='tasmax', transformation_name='tasmax-over-27C-pow2', transformation=trn.tasmax_over_27C_pow2), 
+    # dict(variable='tasmax', transformation_name='tasmax-over-27C-pow3', transformation=trn.tasmax_over_27C_pow3), 
     dict(variable='tasmax', transformation_name='tasmax-over-27C-pow4', transformation=trn.tasmax_over_27C_pow4), 
 
     ]
 
-PERIODS = [dict(rcp='historical' , pername='annual', years=list(range(1981, 2006))),
+PERIODS = [#dict(rcp='historical' , pername='annual', years=list(range(1981, 2006))),
             dict(rcp='rcp85', pername='annual', years=list(range(2006, 2100)))]
 
 MODELS = list(map(lambda x: dict(model=x), [
