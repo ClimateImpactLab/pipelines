@@ -135,9 +135,9 @@ class JobRunner(object):
                 '--account=co_laika',
                 '--qos=laika_bigmem2_normal',
                 '--nodes=1',
-                '--ntasks-per-node=10',
+                '--ntasks-per-node=5',
                 '--mem-per-cpu=8000',
-                '--cpus-per-task=2',
+                '--cpus-per-task=1',
                 '--time=72:00:00']
 
             metadata = self._build_metadata(job)
