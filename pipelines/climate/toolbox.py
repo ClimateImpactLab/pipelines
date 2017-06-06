@@ -599,7 +599,7 @@ class bcsd_transform_annual(bcsd_transform):
                 os.makedirs(os.path.dirname(outpath))
 
             try: 
-                ds.to_netcdf(outpath)
+                ds.to_netcdf(outpath, engine='scipy')
                 print('writing to: {}'.format(outpath))
 
             except ValueError as e:
