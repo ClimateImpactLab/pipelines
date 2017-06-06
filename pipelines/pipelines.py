@@ -137,7 +137,7 @@ class JobRunner(object):
                 '--nodes=1',
                 '--ntasks-per-node=10',
                 '--mem-per-cpu=8000',
-                '--cpus-per-task=1',
+                '--cpus-per-task=2',
                 '--time=72:00:00']
 
             metadata = self._build_metadata(job)
