@@ -598,7 +598,7 @@ class bcsd_transform_annual(bcsd_transform):
             if not os.path.isdir(os.path.dirname(outpath)):
                 os.makedirs(os.path.dirname(outpath))
 
-            ds.to_netcdf(outpath)
+            ds.to_netcdf(outpath , engine='scipy')
             print('writing to: {}'.format(outpath))
 
 
