@@ -94,17 +94,18 @@ def polynomials(ds):
     t1 = time.time()
 
     keys = ds.data_vars.keys()
+    new_ds = ds.copy()
 
     for power in range(5):
-        if power < 2:
+        if power < 1:
             continue
 
         for var in keys:
-            ds[var + '_{}'.format(power)] = (ds[var] - 273.15)**power
+            new_ds[var + '_{}'.format(power)] = (ds[var] - 273.15)**power
 
     t2 = time.time()
     print('Polynomial transformation complete: {}'.format(t2-t1))
-    return ds
+    return new_ds
 
 
 
