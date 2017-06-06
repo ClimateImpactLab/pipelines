@@ -600,12 +600,13 @@ class bcsd_transform_annual(bcsd_transform):
 
             try: 
                 ds.to_netcdf(outpath)
+                print('writing to: {}'.format(outpath))
+
             except ValueError as e:
                 print('Error: {}'.format(e))
                 print(' ')
                 print('Failed to write: {}'.format(outpath))
 
-            print('writing to: {}'.format(outpath))
 
 
 

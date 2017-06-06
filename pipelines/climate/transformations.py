@@ -108,7 +108,30 @@ def polynomials(ds):
     return new_ds
 
 
+@pipelines.prep_func
+def tas_polynomial_2(ds):
 
+    ds['tas'] = (ds.tas - 273.15)
+    ds['tas_2'] = (ds.tas -273.15)**2
+
+    return ds
+
+@pipelines.prep_func
+def tas_polynomial_3(ds):
+
+    ds['tas'] = (ds.tas - 273.15)
+    ds['tas_3'] = (ds.tas -273.15)**3
+
+    return ds
+
+
+@pipelines.prep_func
+def tas_polynomial_4(ds):
+
+    ds['tas'] = (ds.tas - 273.15)
+    ds['tas_4'] = (ds.tas -273.15)**4
+
+    return ds
 
 @pipelines.prep_func
 def average_seasonal_temp_pattern(ds):

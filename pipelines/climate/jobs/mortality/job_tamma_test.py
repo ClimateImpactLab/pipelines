@@ -48,8 +48,9 @@ ADDITIONAL_METADATA = dict(
     frequency='daily')
 
 JOBS = [
-    dict(variable='tas', transformation_name='tas-polynomials', transformation=trn.polynomials) 
-
+    dict(variable='tas', transformation_name='tas-polynomial-2', transformation=trn.tas_polynomial_2),
+    dict(variable='tas', transformation_name='tas-polynomial-3', transformation=trn.tas_polynomial_3),
+    dict(variable='tas', transformation_name='tas-polynomial-4', transformation=trn.tas_polynomial_4)
     ]
 
 PERIODS = [dict(rcp='historical' , pername='annual', years=list(range(1985, 1988)))]
@@ -59,24 +60,24 @@ MODELS = list(map(lambda x: dict(model=x), [
     # 'ACCESS1-0',
     # 'bcc-csm1-1',
     # 'BNU-ESM',
-    'CanESM2',
+    'CanESM2']))
     # 'CCSM4',
-    'CESM1-BGC',
-    'CNRM-CM5',
-    # 'CSIRO-Mk3-6-0',
-    # 'GFDL-CM3',
-    # 'GFDL-ESM2G',
-    'GFDL-ESM2M',
-    'IPSL-CM5A-LR',
-    'IPSL-CM5A-MR',
-    # 'MIROC-ESM-CHEM',
-    # 'MIROC-ESM',
-    # 'MIROC5',
-    'MPI-ESM-LR',
-    'MPI-ESM-MR',
-    'MRI-CGCM3',
-    'inmcm4',
-    'NorESM1-M']))
+    # 'CESM1-BGC',
+    # 'CNRM-CM5',
+    # # 'CSIRO-Mk3-6-0',
+    # # 'GFDL-CM3',
+    # # 'GFDL-ESM2G',
+    # 'GFDL-ESM2M',
+    # 'IPSL-CM5A-LR',
+    # 'IPSL-CM5A-MR',
+    # # 'MIROC-ESM-CHEM',
+    # # 'MIROC-ESM',
+    # # 'MIROC5',
+    # 'MPI-ESM-LR',
+    # 'MPI-ESM-MR',
+    # 'MRI-CGCM3',
+    # 'inmcm4',
+    # 'NorESM1-M']))
 
 AGGREGATIONS = [{'agglev': 'hierid', 'aggwt': 'popwt'}]
 
