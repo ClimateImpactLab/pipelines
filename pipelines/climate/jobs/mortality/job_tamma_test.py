@@ -53,7 +53,7 @@ JOBS = [
     ]
 
 PERIODS = [#dict(rcp='historical' , pername='annual', years=list(range(1981, 2006)))]
-            dict(rcp='rcp45', pername='annual', years=list(range(2006, 2008)))]
+            dict(rcp='rcp45', pername='annual', years=list(range(2006, 2100)))]
 
 MODELS = list(map(lambda x: dict(model=x), [
     'ACCESS1-0',
