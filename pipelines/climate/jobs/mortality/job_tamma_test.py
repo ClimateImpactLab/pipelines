@@ -53,30 +53,30 @@ JOBS = [
     ]
 
 PERIODS = [#dict(rcp='historical' , pername='annual', years=list(range(1981, 2006)))]
-            dict(rcp='rcp85', pername='annual', years=list(range(2006, 2100)))]
+            dict(rcp='rcp45', pername='annual', years=list(range(2006, 2008)))]
 
 MODELS = list(map(lambda x: dict(model=x), [
-    # 'ACCESS1-0',
+    'ACCESS1-0']))
     # 'bcc-csm1-1',
-    'BNU-ESM']))
-    # 'CanESM2',
-    # 'CCSM4',
-    # 'CESM1-BGC',
-    # 'CNRM-CM5',
-    # 'CSIRO-Mk3-6-0',
-    # 'GFDL-CM3',
-    # 'GFDL-ESM2G',
-    # 'GFDL-ESM2M',
-    # 'IPSL-CM5A-LR',
-    # 'IPSL-CM5A-MR',
-    # 'MIROC-ESM-CHEM',
-    # 'MIROC-ESM',
-    # 'MIROC5',
-    # 'MPI-ESM-LR',
-    # 'MPI-ESM-MR',
-    # 'MRI-CGCM3',
-    # 'inmcm4',
-    # 'NorESM1-M']))
+    # # 'BNU-ESM',
+    # # 'CanESM2',
+    # # 'CCSM4',
+    # # 'CESM1-BGC',
+    # # 'CNRM-CM5',
+    # # 'CSIRO-Mk3-6-0',
+    # # 'GFDL-CM3',
+    # # 'GFDL-ESM2G',
+    # # 'GFDL-ESM2M',
+    # # 'IPSL-CM5A-LR',
+    # # 'IPSL-CM5A-MR',
+    # # 'MIROC-ESM-CHEM',
+    # # 'MIROC-ESM',
+    # # 'MIROC5',
+    # # 'MPI-ESM-LR',
+    # # 'MPI-ESM-MR',
+    # # 'MRI-CGCM3',
+    # # 'inmcm4',
+    # # 'NorESM1-M']))
 
 AGGREGATIONS = [{'agglev': 'hierid', 'aggwt': 'popwt'}]
 
