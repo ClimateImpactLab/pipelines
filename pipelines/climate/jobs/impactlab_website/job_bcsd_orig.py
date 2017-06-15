@@ -27,7 +27,7 @@ BCSD_orig_files = os.path.join(
 
 WRITE_PATH = os.path.join(
     '/global/scratch/jsimcock/gcp/climate/data_test_outputs_two',
-    '{variable}_tasmax_over_95_365day_{agglev}_{aggwt}_{model}_{pername}_test_pipelines.nc')
+    '{variable}_tasmax_over_95_{agglev}_{aggwt}_{model}_{pername}_test_pipelines.nc')
 
 ADDITIONAL_METADATA = dict(
     description=__doc__.strip(),
@@ -44,7 +44,7 @@ ADDITIONAL_METADATA = dict(
     frequency='20yr')
 
 JOBS = [
-    dict(variable='tasmax', transformation=trn.tasmax_over_95F_365day),
+    dict(variable='tasmax', transformation=trn.tasmax_over_95F),
     # dict(variable='tasmin', transformation=trn.tasmin_under_32F),
     # dict(variable='tas', transformation=trn.average_seasonal_temp)
     ]
