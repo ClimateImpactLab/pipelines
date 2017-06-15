@@ -27,7 +27,7 @@ BCSD_orig_files = os.path.join(
 
 WRITE_PATH = os.path.join(
     '/global/scratch/jsimcock/gcp/climate/data_test_outputs',
-    '{variable}_{agglev}_{aggwt}_{model}_{pername}_test1_pipelines.nc')
+    '{variable}_tasmax_over_95_{agglev}_{aggwt}_{model}_{pername}_test_pipelines.nc')
 
 ADDITIONAL_METADATA = dict(
     description=__doc__.strip(),
@@ -50,7 +50,7 @@ JOBS = [
     ]
 
 PERIODS = [
-    dict(rcp='historical', pername='1986', years=list(range(1986, 1990))),
+    dict(rcp='historical', pername='1986', years=list(range(1986, 2006))),
     # dict(rcp='rcp85', pername='2020', years=list(range(2020, 2040))),
     # dict(rcp='rcp85', pername='2040', years=list(range(2040, 2060))),
     # dict(rcp='rcp85', pername='2080', years=list(range(2080, 2100)))

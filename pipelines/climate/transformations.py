@@ -26,6 +26,15 @@ def tasmax_over_95F(ds):
     '''
     return ds.tasmax.where((ds.tasmax- 273.15) > 35).count(dim='time')
 
+@pipelines.prep_func
+def tasmax_over_95F_365day(ds):
+    '''
+    Count of days with tasmax over 95F/35C
+    Leap years are removed before counting days (uses a 365 day calendar)
+    '''
+    ds = ds.loc[{'time': ~((ds['time.month'] == 2) & (ds['time.day'] == 29))}]
+    return ds.tasmax.where((ds.tasmax- 273.15) > 35).count(dim='time')
+
 
 @pipelines.prep_func
 def average_seasonal_temp(ds):
