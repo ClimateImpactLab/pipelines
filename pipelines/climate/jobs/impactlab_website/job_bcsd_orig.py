@@ -22,12 +22,12 @@ __contact__ = 'mdelgado@rhg.com'
 __version__ = '0.1.0'
 
 BCSD_orig_files = os.path.join(
-    '/shares/gcp/sources/BCSD-original/{rcp}/day/atmos/{variable}/r1i1p1/v1.0',
+    '/global/scratch/jiacany/nasa_bcsd/raw_data/{rcp}/{model}/{variable}',
     '{variable}_day_BCSD_{rcp}_r1i1p1_{model}_{{year}}.nc')
 
 WRITE_PATH = os.path.join(
-    '/shares/gcp/outputs/diagnostics/web/gcp/climate/{agglev}/{rcp}',
-    '{variable}/{variable}_{model}_{pername}.nc')
+    '/global/scratch/jsimcock/gcp/climate/data_test_outputs_',
+    '{variable}_{agglev}_{aggwt}_{model}_{pername}_test1_pipelines.nc')
 
 ADDITIONAL_METADATA = dict(
     description=__doc__.strip(),
@@ -45,37 +45,40 @@ ADDITIONAL_METADATA = dict(
 
 JOBS = [
     dict(variable='tasmax', transformation=trn.tasmax_over_95F),
-    dict(variable='tasmin', transformation=trn.tasmin_under_32F),
-    dict(variable='tas', transformation=trn.average_seasonal_temp)]
+    # dict(variable='tasmin', transformation=trn.tasmin_under_32F),
+    # dict(variable='tas', transformation=trn.average_seasonal_temp)
+    ]
 
 PERIODS = [
-    dict(rcp='historical', pername='1986', years=list(range(1986, 2006))),
-    dict(rcp='rcp85', pername='2020', years=list(range(2020, 2040))),
-    dict(rcp='rcp85', pername='2040', years=list(range(2040, 2060))),
-    dict(rcp='rcp85', pername='2080', years=list(range(2080, 2100)))]
+    dict(rcp='historical', pername='1986', years=list(range(1986, 1990))),
+    # dict(rcp='rcp85', pername='2020', years=list(range(2020, 2040))),
+    # dict(rcp='rcp85', pername='2040', years=list(range(2040, 2060))),
+    # dict(rcp='rcp85', pername='2080', years=list(range(2080, 2100)))
+    ]
 
 MODELS = list(map(lambda x: dict(model=x), [
     'ACCESS1-0',
-    'bcc-csm1-1',
-    'BNU-ESM',
-    'CanESM2',
-    'CCSM4',
-    'CESM1-BGC',
-    'CNRM-CM5',
-    'CSIRO-Mk3-6-0',
-    'GFDL-CM3',
-    'GFDL-ESM2G',
-    'GFDL-ESM2M',
-    'IPSL-CM5A-LR',
-    'IPSL-CM5A-MR',
-    'MIROC-ESM-CHEM',
-    'MIROC-ESM',
-    'MIROC5',
-    'MPI-ESM-LR',
-    'MPI-ESM-MR',
-    'MRI-CGCM3',
-    'inmcm4',
-    'NorESM1-M']))
+    # 'bcc-csm1-1',
+    # 'BNU-ESM',
+    # 'CanESM2',
+    # 'CCSM4',
+    # 'CESM1-BGC',
+    # 'CNRM-CM5',
+    # 'CSIRO-Mk3-6-0',
+    # 'GFDL-CM3',
+    # 'GFDL-ESM2G',
+    # 'GFDL-ESM2M',
+    # 'IPSL-CM5A-LR',
+    # 'IPSL-CM5A-MR',
+    # 'MIROC-ESM-CHEM',
+    # 'MIROC-ESM',
+    # 'MIROC5',
+    # 'MPI-ESM-LR',
+    # 'MPI-ESM-MR',
+    # 'MRI-CGCM3',
+    # 'inmcm4',
+    # 'NorESM1-M'
+    ]))
 
 AGGREGATIONS = [{'agglev': 'hierid', 'aggwt': 'areawt'}]
 

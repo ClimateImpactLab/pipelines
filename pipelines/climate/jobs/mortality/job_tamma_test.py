@@ -73,7 +73,7 @@ MODELS = list(map(lambda x: dict(model=x), [
     # 'MIROC-ESM',
     # 'MIROC5',
     # 'MPI-ESM-LR',
-    'MPI-ESM-MR']))
+    'MPI-ESM-MR'
     # 'MRI-CGCM3',
     # 'inmcm4',
     # 'NorESM1-M']))

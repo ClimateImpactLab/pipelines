@@ -1,4 +1,4 @@
-'''
+    '''
 Register pipeline segments to be performed on data during a run
 
 .. note::
