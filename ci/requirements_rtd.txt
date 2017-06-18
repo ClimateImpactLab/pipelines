@@ -13,7 +13,7 @@ bumpversion==0.5.3
 watchdog==0.8.3
 cryptography==1.9
 h5py==2.7.0
-netCDF4==1.2.7
+netCDF4==1.2.9
 xarray==0.9.6
 dask==0.15.0
 numpy==1.12.1
